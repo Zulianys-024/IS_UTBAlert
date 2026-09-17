@@ -1,2 +1,38 @@
-# IS_UTBAlert
-Sistema web analítico desarrollado con Python y Dash para la Universidad Tecnológica de Bolívar (UTB), diseñado para centralizar variables de desempeño, procesar datos simulados de estudiantes y generar alertas tempranas orientadas a respaldar el seguimiento académico y de bienestar.
+# 🚨 Sistema de Alertas Tempranas - UTB
+
+Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolívar (UTB)**, diseñado para centralizar variables académicas y de bienestar, procesar información estudiantil mediante datos simulados (*mock data*) y generar alertas tempranas orientadas a respaldar el seguimiento oportuno por parte del área de bienestar y acompañamiento estudiantil.
+
+---
+
+## 👥 Equipo de Trabajo
+* **Brayan Maluenga**
+* **Zulianys Orozco**
+* **Juan Hernandez**
+
+* **Curso / Grupo:** Ingeniería de Software 1206 (Séptimo Semestre)[cite: 1, 2]
+* **Docente:** Aisner Jose Marrugo Juliao[cite: 1, 2]
+
+---
+
+## 🛠️ Tecnologías y Herramientas
+El proyecto está construido bajo un ecosistema robusto en Python y metodologías modernas de desarrollo ágil:
+* **Frontend y Backend:** Python / Dash (Plotly) para la creación del *dashboard* interactivo y la lógica de negocio integrada.
+* **Base de Datos:** Relacional con estructuración de datos simulados (*mock data*).
+* **Control de Versiones:** Git y GitHub[cite: 3].
+* **Gestión de Proyectos:** Tablero ágil con metodología **Kanban**.
+
+---
+
+## 📊 Arquitectura del Sistema
+El sistema se encuentra estructurado en capas modulares que garantizan la separación de responsabilidades:
+1. **Capa de Presentación:** Interfaz web tipo *dashboard* desarrollada en Dash para visualización de métricas y alertas.
+2. **Capa de Lógica de Negocio:** Motor de cálculo de riesgo que procesa las variables de desempeño y bienestar, generando clasificaciones (Riesgo Bajo, Medio, Alto).
+3. **Capa de Datos:** Gestor de acceso a la base de datos simulada estructurada bajo los parámetros de retención de la UTB.
+
+---
+
+## 🚀 Instalación y Ejecución Local
+
+1. Clona este repositorio:
+   ```bash
+   git clone [https://github.com/Zulianys-024/IS_UTBAlert.git](https://github.com/Zulianys-024/IS_UTBAlert.git)
