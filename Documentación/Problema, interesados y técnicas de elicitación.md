@@ -55,6 +55,7 @@ Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese da
 
 #### Muestra 2: Prototipo del Semestre Pasado
 
-![Antigua interfaz del prototipo anterior](Documentación/Prototipo%20anterior.jpeg)
+![Antigua interfaz del prototipo anterior](https://github.com/Zulianys-024/IS_UTBAlert/blob/main/Documentación/Prototipo%20anterior.jpeg?raw=true)
+
 
 *Nota: La captura del prototipo anterior evidencia la evolución de la interfaz desde la propuesta inicial hacia la versión actual adaptada en Dash para la UTB[cite: 1, 3, 4].*
