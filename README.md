@@ -15,11 +15,11 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 ---
 
 ## 🛠️ Tecnologías y Herramientas
-El proyecto está construido bajo un ecosistema robusto en Python y metodologías modernas de desarrollo ágil:
+El proyecto está construido bajo un ecosistema en Python y metodologías modernas de desarrollo ágil:
 * **Frontend y Backend:** Python / Dash (Plotly) para la creación del *dashboard* interactivo y la lógica de negocio integrada.
 * **Base de Datos:** Relacional con estructuración de datos simulados (*mock data*).
 * **Control de Versiones:** Git y GitHub[cite: 3].
-* **Gestión de Proyectos:** Tablero ágil con metodología **Kanban**.
+* **Gestión de Proyectos:** Tablero ágil con metodología **Kanban** utilizando **Jira**.
 
 ---
 
