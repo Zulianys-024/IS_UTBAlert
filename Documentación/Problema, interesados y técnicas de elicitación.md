@@ -59,3 +59,20 @@ Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese da
 
 
 *Nota: La captura del prototipo anterior evidencia la evolución de la interfaz desde la propuesta inicial hacia la versión actual adaptada en Dash para la UTB[cite: 1, 3, 4].*
+
+### 5. Requerimientos identificados
+
+Todos los requerimientos, tanto funcionales como no funcionales, se encuentran especificados en el documento del Proyecto de aula.
+
+### 6. Priorización de requerimientos
+
+Para establecer la prioridad de los requerimientos funcionales y no funcionales del sistema de Alertas Tempranas, el equipo utilizó un criterio de clasificación en tres niveles: **Alta, Media y Baja**. Esta escala se definió evaluando la criticidad operativa para el área de Bienestar Universitario de la UTB, el impacto en la estabilidad de la arquitectura en Dash y la viabilidad técnica para la entrega del Producto Mínimo Viable (MVP).
+
+| Nivel de Prioridad | Criterio de Selección | Requerimientos Asignados | Justificación Técnica y Operativa |
+| :--- | :--- | :--- | :--- |
+| **Alta** *(Obligatorio / Crítico)* | Funcionalidades y atributos de calidad indispensables para el funcionamiento básico e indispensable del sistema. Su ausencia impide la operación de la plataforma. | **RF-01**, **RF-02**, **RF-03**, **RF-04**, **RF-05**,<br>**RNF-01**, **RNF-02**, **RNF-03**, **RNF-04**, **RNF-05**. | Constituyen el núcleo de la solución: autenticación de usuarios, consulta de la base de datos simulada (*mock data*), procesamiento del algoritmo de riesgo, visualización del *dashboard* en Dash, generación de alertas rojas prioritarias y cumplimiento de atributos de usabilidad, rendimiento, compatibilidad y privacidad. |
+| **Media** *(Importante)* | Funcionalidades que aportan un alto valor operativo para el usuario final y mejoran el seguimiento, pero cuya omisión temporal no paraliza la aplicación. | **RF-06**, **RF-07**,<br>**RNF-06**. | Permiten al personal de bienestar filtrar los datos por programa/semestre y registrar las bitácoras del acompañamiento psicológico (RF-07), además de asegurar la mantenibilidad del código en Python y la compatibilidad con navegadores. |
+| **Baja** *(Deseable)* | Capacidades complementarias que mejoran la gestión administrativa o la experiencia de uso, a desarrollarse si el tiempo del proyecto lo permite. | **RF-08**. | La exportación de listados a formatos CSV/Excel facilita el reporte externo, pero no es estrictamente necesaria para la detección visual de alertas dentro del panel. |
+
+**Requerimientos considerados para la primera versión funcional (MVP):**
+Para la versión funcional que se entregará al finalizar el periodo, se han seleccionado la totalidad de los requerimientos de prioridad **Alta** (**RF-01 a RF-05** y **RNF-01 a RNF-05**) junto con el requerimientos de prioridad **Media** **RF-06**. Esta selección garantiza que el área de bienestar disponga de una herramienta capaz de procesar los datos simulados, calcular niveles de riesgo y mostrar las alertas de riesgo alto.
