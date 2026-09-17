@@ -15,10 +15,10 @@ Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese da
 
 | Rol / Interesado | Relación con el proyecto | Principales necesidades y expectativas |
 | :--- | :--- | :--- |
-| **Personal de Bienestar Universitario** *(Usuario final directo)* | Usuarios activos principales encargados del seguimiento de casos de riesgo[cite: 1, 4]. | Visualizar alertas prioritarias (Riesgo Alto), filtrar estudiantes por programa y disponer de un módulo para registrar notas de seguimiento psicológico[cite: 1, 4, 5]. |
-| **Estudiantes de la UTB** *(Beneficiarios indirectos)* | Población evaluada a través de la base de datos simulada[cite: 1, 4]. | Recibir apoyo y orientación oportuna por parte de la universidad cuando sus indicadores académicos se vean afectados[cite: 1, 4]. |
-| **Universidad Tecnológica de Bolívar (UTB)** *(Cliente / Institución)* | Entidad receptora del proyecto de aula[cite: 1, 4]. | Contar con una propuesta técnica viable que optimice la retención estudiantil mediante el análisis centralizado de datos[cite: 1, 4]. |
-| **Administrador del Sistema** *(Rol técnico)* | Encargado del mantenimiento de la plataforma[cite: 4, 5]. | Gestionar credenciales de acceso, asegurar la disponibilidad de la aplicación y la integridad de la base de datos simulada[cite: 4, 5]. |
+| **Personal de Bienestar Universitario** *(Usuario final directo)* | Usuarios activos principales encargados del seguimiento de casos de riesgo. | Visualizar alertas prioritarias (Riesgo Alto), filtrar estudiantes por programa y disponer de un módulo para registrar notas de seguimiento psicológico. |
+| **Estudiantes de la UTB** *(Beneficiarios indirectos)* | Población evaluada a través de la base de datos simulada. | Recibir apoyo y orientación oportuna por parte de la universidad cuando sus indicadores académicos se vean afectados. |
+| **Universidad Tecnológica de Bolívar (UTB)** *(Cliente / Institución)* | Entidad receptora del proyecto de aula. | Contar con una propuesta técnica viable que optimice la retención estudiantil mediante el análisis centralizado de datos. |
+| **Administrador del Sistema** *(Rol técnico)* | Encargado del mantenimiento de la plataforma. | Gestionar credenciales de acceso, asegurar la disponibilidad de la aplicación y la integridad de la base de datos simulada. |
 
 ---
 
