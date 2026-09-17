@@ -3,11 +3,11 @@
 La deserción estudiantil en la Universidad Tecnológica de Bolívar (UTB) constituye un desafío crítico que impacta la permanencia académica y el desarrollo profesional de los estudiantes. Actualmente, la detección de casos en riesgo se ve obstaculizada por la dispersión de la información académica, lo que impide que los equipos institucionales actúen de manera preventiva antes de que el estudiante abandone sus estudios. 
 
 **Usuarios y beneficiarios:** 
-* **Usuarios directos:** Personal de Bienestar Universitario y responsables de acompañamiento estudiantil de la UTB, quienes requieren una herramienta centralizada para consultar estados de riesgo e iniciar rutas de apoyo[cite: 1, 4].
-* **Beneficiarios indirectos:** Estudiantes de la UTB en situación de vulnerabilidad académica, quienes recibirán intervenciones oportunas[cite: 1, 4].
+* **Usuarios directos:** Personal de Bienestar Universitario y responsables de acompañamiento estudiantil de la UTB, quienes requieren una herramienta centralizada para consultar estados de riesgo e iniciar rutas de apoyo.
+* **Beneficiarios indirectos:** Estudiantes de la UTB en situación de vulnerabilidad académica, quienes recibirán intervenciones oportunas.
 
 **Objetivo general del proyecto:**
-Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese datos simulados (*mock data*) para calcular el nivel de riesgo de deserción (Bajo, Medio, Alto) y generar alertas tempranas, permitiendo al área de bienestar realizar un seguimiento psicológico y académico oportuno[cite: 1, 4, 5].
+Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese datos simulados (*mock data*) para calcular el nivel de riesgo de deserción (Bajo, Medio, Alto) y generar alertas tempranas, permitiendo al área de bienestar realizar un seguimiento psicológico y académico oportuno.
 
 ---
 
