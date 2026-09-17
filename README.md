@@ -9,8 +9,8 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 * **Zulianys Orozco**
 * **Juan Hernandez**
 
-* **Curso / Grupo:** Ingeniería de Software 1206 (Séptimo Semestre)[cite: 1, 2]
-* **Docente:** Aisner Jose Marrugo Juliao[cite: 1, 2]
+* **Curso / Grupo:** Ingeniería de Software 1206 (Séptimo Semestre)
+* **Docente:** Aisner Jose Marrugo Juliao
 
 ---
 
@@ -18,8 +18,8 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 El proyecto está construido bajo un ecosistema en Python y metodologías modernas de desarrollo ágil:
 * **Frontend y Backend:** Python / Dash (Plotly) para la creación del *dashboard* interactivo y la lógica de negocio integrada.
 * **Base de Datos:** Relacional con estructuración de datos simulados (*mock data*).
-* **Control de Versiones:** Git y GitHub[cite: 3].
-* **Gestión de Proyectos:** Tablero ágil con metodología **Kanban** utilizando **Jira**.
+* **Control de Versiones:** Git y GitHub.
+* **Gestión de Proyectos:** Tablero ágil con metodología **Kanban** utilizando **Trello**.
 
 ---
 
