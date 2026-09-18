@@ -110,7 +110,7 @@ Para dar respuesta a los hallazgos, el alcance pasó de ser un *Dashboard* pasiv
 | **Actor** | Solo se consideraba al "Personal de Bienestar" y al "Sistema automático" como actores principales. | El control de acceso requiere gestionar diferentes niveles de permisos, identificando al actor "Administrador" (RF-01). | Se incorpora el actor "Administrador" al modelado de casos de uso para la gestión del sistema. |
 
 ---
-**Nota:** Los diagramas UML actualizados se encuentran adjuntos en la carpeta `docs/diagramas/` (o incluir enlace a las imágenes actualizadas).
+**Nota:** Los diagramas UML actualizados se encuentran adjuntos en el apartado `Diagramas actualizados.pdf`.
 
 ### 8. Sustentación y Aplicación de la Metodología Ágil (Kanban)
 
