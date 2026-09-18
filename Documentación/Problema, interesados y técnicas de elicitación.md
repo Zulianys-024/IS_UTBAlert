@@ -25,18 +25,18 @@ Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese da
 ### 3. Técnicas de elicitación aplicadas
 
 **1. Lluvia de ideas (*Brainstorming*)**
-* **Objetivo:** Definir el alcance del proyecto, seleccionar el stack tecnológico (Dash/Python) y delimitar el motor de cálculo basado en datos simulados[cite: 1, 4].
-* **Participantes:** Brayan Maluenga, Zulianys Orozco, Juan Hernandez (Equipo de desarrollo)[cite: 1, 4].
-* **Periodo de aplicación:** 24 de agosto al 2 de septiembre de 2026[cite: 1, 4].
-* **Herramienta utilizada:** Tablero digital colaborativo (Miro) y sesiones de trabajo técnico[cite: 3].
-* **Principales hallazgos:** Se determinó no utilizar datos reales por implicaciones legales, prescindir del rol docente para enfocar la plataforma exclusivamente en el área de bienestar y utilizar un motor de riesgo parametrizado por umbrales[cite: 1, 4, 5].
+* **Objetivo:** Definir el alcance del proyecto, seleccionar el stack tecnológico (Dash/Python) y delimitar el motor de cálculo basado en datos simulados.
+* **Participantes:** Brayan Maluenga, Zulianys Orozco, Juan Hernandez (Equipo de desarrollo).
+* **Periodo de aplicación:** 24 de agosto al 2 de septiembre de 2026.
+* **Herramienta utilizada:** Tablero digital colaborativo (Miro) y sesiones de trabajo técnico.
+* **Principales hallazgos:** Se determinó no utilizar datos reales por implicaciones legales, prescindir del rol docente para enfocar la plataforma exclusivamente en el área de bienestar y utilizar un motor de riesgo parametrizado por umbrales.
 
 **2. Revisión de prototipos y bocetos previos**
-* **Objetivo:** Evaluar la interfaz y la estructura visual desarrollada en el proyecto del semestre anterior para adaptar su flujo a la nueva arquitectura en Dash[cite: 3].
-* **Participantes:** Brayan Maluenga, Zulianys Orozco, Juan Hernandez[cite: 1, 4].
-* **Periodo de aplicación:** 3 de septiembre al 10 de septiembre de 2026[cite: 3, 4].
-* **Herramienta utilizada:** Prototipos navegables en Figma / Bocetos de interfaz[cite: 3].
-* **Principales hallazgos:** Se identificó la necesidad de transformar el *dashboard* en un panel interactivo con tarjetas de alerta de riesgo alto en rojo y añadir una ventana modal para el registro de bitácoras del seguimiento psicológico (RF-07)[cite: 4, 5].
+* **Objetivo:** Evaluar la interfaz y la estructura visual desarrollada en el proyecto del semestre anterior para adaptar su flujo a la nueva arquitectura en Dash.
+* **Participantes:** Brayan Maluenga, Zulianys Orozco, Juan Hernandez.
+* **Periodo de aplicación:** 3 de septiembre al 10 de septiembre de 2026.
+* **Herramienta utilizada:** Prototipos navegables en Figma / Bocetos de interfaz.
+* **Principales hallazgos:** Se identificó la necesidad de transformar el *dashboard* en un panel interactivo con tarjetas de alerta de riesgo alto en rojo y añadir una ventana modal para el registro de bitácoras del seguimiento psicológico (RF-07).
 
 ---
 
@@ -46,10 +46,10 @@ Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese da
 
 | Categoría | Ideas recopiladas | Decisión / Resultado |
 | :--- | :--- | :--- |
-| **Enfoque de datos** | Usar base de datos real vs. datos simulados (*mock data*)[cite: 1, 4]. | **Aprobado usar *mock data*** para evitar trámites legales y manejo de datos sensibles[cite: 1, 4]. |
-| **Usuarios finales** | Incluir a docentes y personal de bienestar vs. solo Bienestar Universitario[cite: 1, 4]. | **Aprobado solo Bienestar Universitario**; los docentes no añaden valor directo al flujo de intervención psicológica[cite: 1, 4]. |
+| **Enfoque de datos** | Usar base de datos real vs. datos simulados (*mock data*). | **Aprobado usar *mock data*** para evitar trámites legales y manejo de datos sensibles. |
+| **Usuarios finales** | Incluir a docentes y personal de bienestar vs. solo Bienestar Universitario. | **Aprobado solo Bienestar Universitario**; los docentes no añaden valor directo al flujo de intervención psicológica. |
 | **Tecnología Frontend/Backend** | Usar Django/React vs. Python con Dash. | **Aprobado Dash**, permite integrar analítica de datos, gráficos Plotly y backend en Python de forma ágil. |
-| **Acciones de intervención** | Enviar correos automáticos vs. permitir registro de notas de seguimiento[cite: 4, 5]. | **Aprobado registro de notas (RF-07)** para que el profesional guarde el historial del acompañamiento humano[cite: 4, 5]. |
+| **Acciones de intervención** | Enviar correos automáticos vs. permitir registro de notas de seguimiento. | **Aprobado registro de notas (RF-07)** para que el profesional guarde el historial del acompañamiento humano. |
 
 ---
 
@@ -58,7 +58,7 @@ Desarrollar una aplicación web tipo *dashboard* en Python (Dash) que procese da
 ![Antigua interfaz del prototipo anterior](https://github.com/Zulianys-024/IS_UTBAlert/blob/main/Documentación/Prototipo%20anterior.jpeg?raw=true)
 
 
-*Nota: La captura del prototipo anterior evidencia la evolución de la interfaz desde la propuesta inicial hacia la versión actual adaptada en Dash para la UTB[cite: 1, 3, 4].*
+*Nota: La captura del prototipo anterior evidencia la evolución de la interfaz desde la propuesta inicial hacia la versión actual adaptada en Dash para la UTB.*
 
 ### 5. Requerimientos identificados
 
@@ -81,16 +81,16 @@ Para la versión funcional que se entregará al finalizar el periodo, se han sel
 
 **Descripción de la concepción inicial:**
 
-Inicialmente, nuestro proyecto "Alertas Tempranas" se planteó como una herramienta estrictamente de procesamiento y visualización pasiva. El modelado original contemplaba que el "Personal de Bienestar" iniciara sesión y el "Sistema Automático" simplemente procesara la base de datos simulada para mostrar las alertas en el panel de control[cite: 3]. El alcance original no contemplaba que el usuario interactuara insertando nueva información o extrayendo reportes del sistema[cite: 3].
+Inicialmente, nuestro proyecto "Alertas Tempranas" se planteó como una herramienta estrictamente de procesamiento y visualización pasiva. El modelado original contemplaba que el "Personal de Bienestar" iniciara sesión y el "Sistema Automático" simplemente procesara la base de datos simulada para mostrar las alertas en el panel de control. El alcance original no contemplaba que el usuario interactuara insertando nueva información o extrayendo reportes del sistema.
 
 **Hallazgos obtenidos durante la elicitación:**
 
 Durante el levantamiento y análisis de requerimientos, se identificaron necesidades que ampliaron la idea inicial:
 
-1. **Necesidad de registro de intervenciones:** Se determinó que no basta con visualizar la alerta, sino que el Personal de Bienestar requiere dejar constancia del acompañamiento humano realizado a través de "notas de seguimiento psicológico" (RF-07)[cite: 2].
-2. **Uso administrativo de los datos:** Se identificó la necesidad de exportar la información filtrada (en Excel/CSV) para la gestión administrativa del área de bienestar, lo cual no estaba en el alcance inicial (RF-08)[cite: 2].
-3. **Filtros avanzados:** Se hizo evidente que los usuarios necesitan filtrar la información no solo por nivel de riesgo, sino también por programa académico y semestre (RF-06)[cite: 2].
-4. **Roles de usuario:** El requerimiento de autenticación (RF-01) evidenció la existencia de un rol "Administrador", el cual no estaba explícito como actor en los diagramas de casos de uso iniciales[cite: 2, 3].
+1. **Necesidad de registro de intervenciones:** Se determinó que no basta con visualizar la alerta, sino que el Personal de Bienestar requiere dejar constancia del acompañamiento humano realizado a través de "notas de seguimiento psicológico" (RF-07).
+2. **Uso administrativo de los datos:** Se identificó la necesidad de exportar la información filtrada (en Excel/CSV) para la gestión administrativa del área de bienestar, lo cual no estaba en el alcance inicial (RF-08).
+3. **Filtros avanzados:** Se hizo evidente que los usuarios necesitan filtrar la información no solo por nivel de riesgo, sino también por programa académico y semestre (RF-06).
+4. **Roles de usuario:** El requerimiento de autenticación (RF-01) evidenció la existencia de un rol "Administrador", el cual no estaba explícito como actor en los diagramas de casos de uso iniciales.
 
 **Cambios realizados en el alcance, funcionalidades y diagramas:**
 
@@ -104,10 +104,10 @@ Para dar respuesta a los hallazgos, el alcance pasó de ser un *Dashboard* pasiv
 
 | Elemento revisado | Concepción inicial | Hallazgo de la elicitación | Cambio realizado o justificación |
 | :--- | :--- | :--- | :--- |
-| **Funcionalidad / Caso de Uso** | El sistema solo permitía consultar y visualizar las alertas tempranas generadas por el sistema automático[cite: 3]. | El personal de bienestar necesita registrar notas del seguimiento psicológico realizado a los estudiantes en riesgo (RF-07)[cite: 2]. | Se agregó la funcionalidad de registro de notas. Se debe actualizar el diagrama de casos de uso ("Registrar nota de seguimiento") y crear la clase `SeguimientoPsicologico`. |
-| **Funcionalidad / Caso de Uso** | La visualización estaba confinada estrictamente a la interfaz web (Dashboard)[cite: 3]. | Se requiere extraer la información para gestión administrativa externa (RF-08)[cite: 2]. | Se agregó la funcionalidad de exportación. Se debe incluir el caso de uso "Exportar reporte" y actualizar métodos en el controlador. |
-| **Atributos y Métodos (Clases)** | La clase `DashboardController` solo contemplaba filtrar alertas por nivel de riesgo[cite: 3]. | Los usuarios requieren filtrar también por programa académico y semestre (RF-06)[cite: 2]. | Se deben actualizar los métodos de filtrado en la clase `DashboardController` dentro del diagrama de clases. |
-| **Actor** | Solo se consideraba al "Personal de Bienestar" y al "Sistema automático" como actores principales[cite: 3]. | El control de acceso requiere gestionar diferentes niveles de permisos, identificando al actor "Administrador" (RF-01)[cite: 2]. | Se incorpora el actor "Administrador" al modelado de casos de uso para la gestión del sistema. |
+| **Funcionalidad / Caso de Uso** | El sistema solo permitía consultar y visualizar las alertas tempranas generadas por el sistema automático. | El personal de bienestar necesita registrar notas del seguimiento psicológico realizado a los estudiantes en riesgo (RF-07). | Se agregó la funcionalidad de registro de notas. Se debe actualizar el diagrama de casos de uso ("Registrar nota de seguimiento") y crear la clase `SeguimientoPsicologico`. |
+| **Funcionalidad / Caso de Uso** | La visualización estaba confinada estrictamente a la interfaz web (Dashboard). | Se requiere extraer la información para gestión administrativa externa (RF-08). | Se agregó la funcionalidad de exportación. Se debe incluir el caso de uso "Exportar reporte" y actualizar métodos en el controlador. |
+| **Atributos y Métodos (Clases)** | La clase `DashboardController` solo contemplaba filtrar alertas por nivel de riesgo. | Los usuarios requieren filtrar también por programa académico y semestre (RF-06). | Se deben actualizar los métodos de filtrado en la clase `DashboardController` dentro del diagrama de clases. |
+| **Actor** | Solo se consideraba al "Personal de Bienestar" y al "Sistema automático" como actores principales. | El control de acceso requiere gestionar diferentes niveles de permisos, identificando al actor "Administrador" (RF-01). | Se incorpora el actor "Administrador" al modelado de casos de uso para la gestión del sistema. |
 
 ---
 **Nota:** Los diagramas UML actualizados se encuentran adjuntos en la carpeta `docs/diagramas/` (o incluir enlace a las imágenes actualizadas).
