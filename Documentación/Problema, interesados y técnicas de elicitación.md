@@ -111,3 +111,40 @@ Para dar respuesta a los hallazgos, el alcance pasó de ser un *Dashboard* pasiv
 
 ---
 **Nota:** Los diagramas UML actualizados se encuentran adjuntos en la carpeta `docs/diagramas/` (o incluir enlace a las imágenes actualizadas).
+
+### 8. Sustentación y Aplicación de la Metodología Ágil (Kanban)
+
+#### 8.1. Sustentación de la Metodología Seleccionada
+
+Para la gestión y desarrollo del Sistema de Alertas Tempranas se seleccionó la metodología **Kanban**, implementada dinámicamente mediante la herramienta **Trello**. Esta elección responde directamente a las características operativas y técnicas del equipo:
+
+* **Adecuación al tamaño y dinámica del equipo:** Al ser un equipo de tres integrantes (Brayan Maluenga, Zulianys Orozco y Juan Hernandez), Kanban elimina la sobrecarga administrativa de ceremonias complejas (como las de Scrum), permitiendo un flujo de trabajo ligero, enfocado y transparente.
+* **Flexibilidad frente a los requerimientos:** La plataforma desarrollada en Python/Dash requiere la construcción e integración modular del motor de riesgo y la interfaz visual. Kanban permite gestionar este desarrollo de forma continua, adaptándose fácilmente a los ajustes que surjan al manipular los datos simulados (*mock data*).
+* **Gestión por prioridades reales:** Permite canalizar los esfuerzos del equipo directamente hacia los requerimientos de prioridad **Alta** definidos para el Producto Mínimo Viable (MVP), asegurando entregas funcionales continuas sin la rigidez de duraciones fijas de *sprint*.
+
+---
+
+#### 8.2. Aplicación Práctica de Kanban en el Proyecto
+
+**1. Estructura del Tablero de Trabajo (Trello)**  
+El proyecto se organiza en un tablero principal de Trello articulado en cinco columnas que reflejan el estado del flujo de trabajo:
+* **Backlog del Proyecto:** Listado general de todas las historias de usuario y tareas técnicas pendientes por iniciar.
+* **Por Hacer (To Do):** Tareas seleccionadas para la fase de trabajo actual, ordenadas por su nivel de prioridad.
+* **En Proceso (In Progress):** Tareas en desarrollo activo por parte de los miembros del equipo. Se aplica un límite de trabajo en progreso (*Work In Progress - WIP*) de máximo 2 tareas simultáneas por persona para evitar cuellos de botella.
+* **En Revisión / QA:** Funcionalidades completadas que están siendo probadas (ej. validación de *callbacks* en Dash o pruebas de carga de *mock data*).
+* **Hecho (Done):** Tareas finalizadas, probadas y documentadas satisfactoriamente.
+
+**2. Historias de Usuario, Tareas y Prioridades**  
+* **Historias de Usuario / Tareas:** Cada requerimiento (RF y RNF) se traduce en tarjetas de Trello redactadas con la estructura de Historia de Usuario. Cada tarjeta incluye la descripción, los criterios de aceptación, el responsable asignado y las listas de chequeo necesarias.
+* **Priorización:** Las tarjetas se identifican visualmente mediante etiquetas de colores según su prioridad (**Alta: Rojo**, **Media: Amarillo**, **Baja: Verde**). El equipo toma las tareas directamente desde la parte superior de la columna *Por Hacer*, respetando el orden de criticidad.
+
+**3. Flujo de Trabajo e Iteraciones**  
+En lugar de iteraciones cerradas con calendarios strictly fijados por sprints, el proyecto avanza bajo un modelo de **Flujo Continuo e Incremental**. Las entregas de avances funcionales se alinean con los hitos académicos del semestre (Corte 2 y Corte 3), garantizando que al final de cada hito se cuente con un incremento de software estable y probado en Dash.
+
+**4. Asignación de Responsabilidades**  
+* **Trabajo Colaborativo:** Los tres integrantes actúan como equipo de desarrollo multidisciplinario, asumiendo tareas según el frente técnico (backend en Python, visualización en Dash, modelado de datos y documentación).
+* **Facilitación del Tablero:** La responsabilidad de mantener el tablero actualizado y verificar los límites WIP se rota periódicamente entre los miembros del equipo para promover la autoorganización.
+
+**5. Reuniones de Seguimiento**  
+* **Sincronización Breve (Daily Kanban):** Reuniones virtuales o presenciales de 10 a 15 minutos, 1 a 2 veces por semana, con el tablero de Trello en pantalla. Se responden tres preguntas esenciales: *¿Qué tareas moví a Hecho?*, *¿En qué tarjeta estoy trabajando?* y *¿Existe algún bloqueo técnico?*
+* **Revisión de Hito:** Sesión de demostración del panel en Dash al finalizar cada entrega para validar los requerimientos completados y reordenar las tarjetas del Backlog de cara al siguiente ciclo.
