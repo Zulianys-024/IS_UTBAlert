@@ -81,7 +81,13 @@ Para la versión funcional que se entregará al finalizar el periodo, se han sel
 
 **Descripción de la concepción inicial:**
 
-Inicialmente, el proyecto "Alertas Tempranas" se concebía como una herramienta estrictamente de procesamiento y visualización pasiva. El modelado original contemplaba que el "Personal de Bienestar" iniciara sesión y el "Sistema Automático" simplemente procesara la base de datos simulada para mostrar las alertas en el panel de control[cite: 3]. El alcance original no contemplaba que el usuario interactuara insertando nueva información o extrayendo reportes del sistema[cite: 3].
+Inicialmente, nuestro proyecto "Alertas Tempranas" se planteó como una herramienta estrictamente de procesamiento y visualización pasiva. El modelado original contemplaba que el "Personal de Bienestar" iniciara sesión y el "Sistema Automático" simplemente procesara la base de datos simulada para mostrar las alertas en el panel de control[cite: 3]. El alcance original no contemplaba que el usuario interactuara insertando nueva información o extrayendo reportes del sistema[cite: 3].
 
 **Hallazgos obtenidos durante la elicitación:**
+
 Durante el levantamiento y análisis de requerimientos, se identificaron necesidades que ampliaron la idea inicial:
+
+1. **Necesidad de registro de intervenciones:** Se determinó que no basta con visualizar la alerta, sino que el Personal de Bienestar requiere dejar constancia del acompañamiento humano realizado a través de "notas de seguimiento psicológico" (RF-07)[cite: 2].
+2. **Uso administrativo de los datos:** Se identificó la necesidad de exportar la información filtrada (en Excel/CSV) para la gestión administrativa del área de bienestar, lo cual no estaba en el alcance inicial (RF-08)[cite: 2].
+3. **Filtros avanzados:** Se hizo evidente que los usuarios necesitan filtrar la información no solo por nivel de riesgo, sino también por programa académico y semestre (RF-06)[cite: 2].
+4. **Roles de usuario:** El requerimiento de autenticación (RF-01) evidenció la existencia de un rol "Administrador", el cual no estaba explícito como actor en los diagramas de casos de uso iniciales[cite: 2, 3].
