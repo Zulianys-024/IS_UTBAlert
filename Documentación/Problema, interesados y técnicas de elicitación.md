@@ -148,3 +148,5 @@ En lugar de iteraciones cerradas con calendarios strictly fijados por sprints, e
 **5. Reuniones de Seguimiento**  
 * **Sincronización Breve (Daily Kanban):** Reuniones virtuales o presenciales de 10 a 15 minutos, 1 a 2 veces por semana, con el tablero de Trello en pantalla. Se responden tres preguntas esenciales: *¿Qué tareas moví a Hecho?*, *¿En qué tarjeta estoy trabajando?* y *¿Existe algún bloqueo técnico?*
 * **Revisión de Hito:** Sesión de demostración del panel en Dash al finalizar cada entrega para validar los requerimientos completados y reordenar las tarjetas del Backlog de cara al siguiente ciclo.
+
+Tablero de Trello: https://trello.com/invite/b/6aacb746e43824fbce9dc4dd/ATTI403d1d2936f223b1a834b41af58b306a99B65898/🚀-utbalert-tablero-kanban-de-proyecto
