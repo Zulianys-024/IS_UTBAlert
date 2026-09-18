@@ -78,3 +78,9 @@ Para establecer la prioridad de los requerimientos funcionales y no funcionales 
 Para la versión funcional que se entregará al finalizar el periodo, se han seleccionado la totalidad de los requerimientos de prioridad **Alta** (**RF-01 a RF-05** y **RNF-01 a RNF-05**) junto con el requerimientos de prioridad **Media** **RF-06**. Esta selección garantiza que el área de bienestar disponga de una herramienta capaz de procesar los datos simulados, calcular niveles de riesgo y mostrar las alertas de riesgo alto.
 
 ### 7. Validación y ajuste del modelo previo
+
+## Descripción de la concepción inicial
+Inicialmente, el proyecto "Alertas Tempranas" se concebía como una herramienta estrictamente de procesamiento y visualización pasiva. El modelado original contemplaba que el "Personal de Bienestar" iniciara sesión y el "Sistema Automático" simplemente procesara la base de datos simulada para mostrar las alertas en el panel de control[cite: 3]. El alcance original no contemplaba que el usuario interactuara insertando nueva información o extrayendo reportes del sistema[cite: 3].
+
+## Hallazgos obtenidos durante la elicitación
+Durante el levantamiento y análisis de requerimientos, se identificaron necesidades que ampliaron la idea inicial:
