@@ -79,7 +79,7 @@ Para la versión funcional que se entregará al finalizar el periodo, se han sel
 
 ### 7. Validación y ajuste del modelo previo
 
-**Descripción de la concepción inicial:**
+* **Descripción de la concepción inicial:**
 Inicialmente, el proyecto "Alertas Tempranas" se concebía como una herramienta estrictamente de procesamiento y visualización pasiva. El modelado original contemplaba que el "Personal de Bienestar" iniciara sesión y el "Sistema Automático" simplemente procesara la base de datos simulada para mostrar las alertas en el panel de control[cite: 3]. El alcance original no contemplaba que el usuario interactuara insertando nueva información o extrayendo reportes del sistema[cite: 3].
 
 **Hallazgos obtenidos durante la elicitación:**
