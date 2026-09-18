@@ -99,3 +99,15 @@ Para dar respuesta a los hallazgos, el alcance pasó de ser un *Dashboard* pasiv
 * **Diagrama de Casos de Uso:** Se deben agregar los casos de uso "Registrar nota de seguimiento" y "Exportar reporte de riesgo" asociados al Personal de Bienestar. Se debe incluir al actor "Administrador".
 * **Diagrama de Clases:** Se debe crear una nueva clase `SeguimientoPsicologico` relacionada con `EstudianteMock` para soportar el RF-07. Se deben ampliar los métodos en `DashboardController` para incluir la exportación y los nuevos parámetros de filtrado (programa y semestre).
 * **Diagrama de Actividades / Secuencia:** Se deben incluir los flujos alternos donde el usuario selecciona un perfil y guarda una nota de seguimiento.
+
+## Tabla de Validación
+
+| Elemento revisado | Concepción inicial | Hallazgo de la elicitación | Cambio realizado o justificación |
+| :--- | :--- | :--- | :--- |
+| **Funcionalidad / Caso de Uso** | El sistema solo permitía consultar y visualizar las alertas tempranas generadas por el sistema automático[cite: 3]. | El personal de bienestar necesita registrar notas del seguimiento psicológico realizado a los estudiantes en riesgo (RF-07)[cite: 2]. | Se agregó la funcionalidad de registro de notas. Se debe actualizar el diagrama de casos de uso ("Registrar nota de seguimiento") y crear la clase `SeguimientoPsicologico`. |
+| **Funcionalidad / Caso de Uso** | La visualización estaba confinada estrictamente a la interfaz web (Dashboard)[cite: 3]. | Se requiere extraer la información para gestión administrativa externa (RF-08)[cite: 2]. | Se agregó la funcionalidad de exportación. Se debe incluir el caso de uso "Exportar reporte" y actualizar métodos en el controlador. |
+| **Atributos y Métodos (Clases)** | La clase `DashboardController` solo contemplaba filtrar alertas por nivel de riesgo[cite: 3]. | Los usuarios requieren filtrar también por programa académico y semestre (RF-06)[cite: 2]. | Se deben actualizar los métodos de filtrado en la clase `DashboardController` dentro del diagrama de clases. |
+| **Actor** | Solo se consideraba al "Personal de Bienestar" y al "Sistema automático" como actores principales[cite: 3]. | El control de acceso requiere gestionar diferentes niveles de permisos, identificando al actor "Administrador" (RF-01)[cite: 2]. | Se incorpora el actor "Administrador" al modelado de casos de uso para la gestión del sistema. |
+
+---
+**Nota:** Los diagramas UML actualizados se encuentran adjuntos en la carpeta `docs/diagramas/` (o incluir enlace a las imágenes actualizadas).
