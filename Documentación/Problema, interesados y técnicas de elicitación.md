@@ -91,3 +91,11 @@ Durante el levantamiento y análisis de requerimientos, se identificaron necesid
 2. **Uso administrativo de los datos:** Se identificó la necesidad de exportar la información filtrada (en Excel/CSV) para la gestión administrativa del área de bienestar, lo cual no estaba en el alcance inicial (RF-08)[cite: 2].
 3. **Filtros avanzados:** Se hizo evidente que los usuarios necesitan filtrar la información no solo por nivel de riesgo, sino también por programa académico y semestre (RF-06)[cite: 2].
 4. **Roles de usuario:** El requerimiento de autenticación (RF-01) evidenció la existencia de un rol "Administrador", el cual no estaba explícito como actor en los diagramas de casos de uso iniciales[cite: 2, 3].
+
+**Cambios realizados en el alcance, funcionalidades y diagramas:**
+
+Para dar respuesta a los hallazgos, el alcance pasó de ser un *Dashboard* pasivo a una herramienta interactiva de gestión básica de casos. Los diagramas se actualizarán de la siguiente manera:
+
+* **Diagrama de Casos de Uso:** Se deben agregar los casos de uso "Registrar nota de seguimiento" y "Exportar reporte de riesgo" asociados al Personal de Bienestar. Se debe incluir al actor "Administrador".
+* **Diagrama de Clases:** Se debe crear una nueva clase `SeguimientoPsicologico` relacionada con `EstudianteMock` para soportar el RF-07. Se deben ampliar los métodos en `DashboardController` para incluir la exportación y los nuevos parámetros de filtrado (programa y semestre).
+* **Diagrama de Actividades / Secuencia:** Se deben incluir los flujos alternos donde el usuario selecciona un perfil y guarda una nota de seguimiento.
