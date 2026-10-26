@@ -44,7 +44,15 @@ El sistema se encuentra estructurado en capas modulares que garantizan la separa
    python -m pip install -r requirements.txt
    ```
 
-3. Configura las credenciales de Kaggle de una de estas formas:
+3. Ejecuta la aplicación web (Dashboard interactivo):
+   ```bash
+   python app.py
+   ```
+   Abre tu navegador en `http://127.0.0.1:8050`. Podrás iniciar sesión con las credenciales de bienestar:
+   - **Usuario:** `bienestar@utb.edu.co`
+   - **Contraseña:** `utb2026bienestar`
+
+4. (Opcional) Configura las credenciales de Kaggle de una de estas formas:
 
    - Recomendado: coloca el archivo `kaggle.json` descargado desde Kaggle en `%USERPROFILE%\.kaggle\kaggle.json` (crea la carpeta `.kaggle` si no existe). No lo guardes dentro del repositorio.
    - Alternativa en PowerShell:
