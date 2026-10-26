@@ -83,17 +83,31 @@ El sistema se encuentra estructurado en capas modulares que garantizan la separa
 
 ## 🐘 Carga de datos en PostgreSQL
 
-El repositorio **no está conectado permanentemente a una base de datos ni sincroniza datos con GitHub**. `scripts/load_postgres.py` abre una conexión cuando se ejecuta, lee `data/processed/estudiantes_academicos.csv` e intenta insertar sus filas en PostgreSQL. La configuración actual apunta a una instancia local (`localhost`) y a la base `proyecto_desercion`; por eso, cada persona debe tener PostgreSQL instalado y configurar su propia conexión.
+La aplicación y los scripts se conectan a PostgreSQL usando la variable de entorno `DATABASE_URL`. Puede ser la URL de una base administrada (por ejemplo, Supabase, Neon o Railway) o de una instancia local. Cada integrante puede usar la misma base compartida, sin instalar PostgreSQL localmente. El navegador nunca se conecta directamente a la base: solo el servidor de la aplicación debe tener acceso a las credenciales.
 
-Antes de ejecutar el cargador:
-
-1. Crea la base de datos `proyecto_desercion` en PostgreSQL.
-2. Conéctate a esa base y ejecuta el SQL de `db/schema.sql` para crear la tabla `estudiantes_academicos`.
-3. Verifica que los datos de conexión de `scripts/load_postgres.py` correspondan a tu instancia y usuario local.
-4. Confirma que el CSV procesado tenga las ocho columnas que el script inserta, en el mismo orden: `student_id`, `course`, `curricular_units_1st_sem_enrolled`, `curricular_units_2nd_sem_enrolled`, `curricular_units_1st_sem_grade`, `curricular_units_2nd_sem_grade`, `target` y `attendance_percentage`.
-5. Ejecuta desde la raíz del proyecto:
+1. Crea una base PostgreSQL en tu proveedor y copia su URL de conexión. Mantén habilitado SSL si el proveedor lo requiere.
+2. En la consola donde correrás el cargador, define la variable. En PowerShell:
+   ```powershell
+   $env:DATABASE_URL = "postgresql://usuario:contraseña@host:5432/nombre_base?sslmode=require"
+   ```
+   En Linux/macOS:
    ```bash
+   export DATABASE_URL="postgresql://usuario:contraseña@host:5432/nombre_base?sslmode=require"
+   ```
+   En un despliegue web, agrega `DATABASE_URL` en la sección de variables/secretos del proveedor de hosting. No la pongas en el código, README, GitHub ni en el frontend.
+3. Ejecuta `db/schema.sql` en esa base para crear `estudiantes_academicos`.
+4. Instala dependencias y carga el CSV procesado:
+   ```bash
+   python -m pip install -r requirements.txt
    python scripts/load_postgres.py
    ```
 
-La carga solo se realiza al ejecutar el script y queda guardada en la base local a la que se conectó. El script no crea la base de datos por sí solo. No publiques contraseñas ni las guardes en el repositorio; para compartir el proyecto, cada integrante debe usar sus propias credenciales. La columna `student_id` es clave primaria, así que volver a cargar filas con identificadores ya existentes puede producir un error por duplicados.
+`scripts/load_postgres.py` requiere que `DATABASE_URL` esté definida y da un error claro si falta. La carga inserta las columnas `student_id`, `course`, `curricular_units_1st_sem_enrolled`, `curricular_units_2nd_sem_enrolled`, `curricular_units_1st_sem_grade`, `curricular_units_2nd_sem_grade`, `target` y `attendance_percentage`. La columna `student_id` es clave primaria; repetir una carga con identificadores existentes produce un error por duplicados.
+
+### Acceso para integrantes del equipo
+
+El repositorio no incluye la contraseña ni la URL real de Supabase. Quien clone el proyecto debe solicitar al responsable de la base la variable `DATABASE_URL` por un canal privado y configurarla en su propio entorno antes de ejecutar `scripts/load_postgres.py`. El responsable debe compartir solo el acceso que cada integrante necesita y cambiar la contraseña si la URL se expone accidentalmente.
+
+No agregues la URL real a este README, a un archivo `.env` versionado, al código ni a GitHub. La URL de PostgreSQL permite acceso directo a la base con los permisos de su usuario; cualquier persona que la obtenga podría consultar o modificar datos según esos permisos.
+
+Para una demo pública donde cualquier visitante solo necesite consultar datos, no compartas `DATABASE_URL`. La arquitectura debe exponer lecturas mediante el backend de la aplicación o la API de Supabase con una clave publicable y políticas RLS de solo lectura. Las claves secretas y las contraseñas de PostgreSQL permanecen únicamente en el servidor. La clave publicable por sí sola no autoriza acceso: RLS y los permisos deben configurarse correctamente. Consulta [seguridad de datos en Supabase](https://supabase.com/docs/guides/database/secure-data) y [claves de API](https://supabase.com/docs/guides/getting-started/api-keys).
