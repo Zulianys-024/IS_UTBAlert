@@ -52,13 +52,17 @@ def parse_args():
     )
     parser.add_argument(
         "--dataset",
-        default="nabeelqureshitiii/student-performance-dataset",
+        default="waleedejaz/predict-students-dropout-and-academic-success",
         help="Slug del dataset de Kaggle (ej. usuario/nombre-dataset)",
     )
     parser.add_argument(
         "--output-name",
         default="uci_dropout_raw.csv",
         help="Nombre del archivo CSV final dentro de data/raw/",
+    )
+    parser.add_argument(
+        "--csv-file",
+        help="Nombre del CSV dentro del dataset. Si no se indica, debe haber un único CSV.",
     )
     parser.add_argument(
         "--output-dir",
@@ -79,9 +83,21 @@ def main():
     destino_carpeta = Path(__file__).resolve().parents[1] / args.output_dir
     destino_carpeta.mkdir(parents=True, exist_ok=True)
 
-    archivos_csv = sorted(Path(descarga_path).glob("*.csv"))
+    archivos_csv = sorted(Path(descarga_path).rglob("*.csv"))
     if not archivos_csv:
         raise SystemExit(f"No se encontró ningún archivo CSV en la descarga de '{args.dataset}'.")
+
+    if args.csv_file:
+        archivos_csv = [archivo for archivo in archivos_csv if archivo.name == args.csv_file]
+        if not archivos_csv:
+            raise SystemExit(
+                f"No se encontró el CSV '{args.csv_file}' en la descarga de '{args.dataset}'."
+            )
+    elif len(archivos_csv) > 1:
+        nombres = "\n".join(f"  - {archivo.name}" for archivo in archivos_csv)
+        raise SystemExit(
+            "El dataset contiene varios CSV. Selecciona uno con --csv-file:\n" + nombres
+        )
 
     archivo_destino = destino_carpeta / args.output_name
     shutil.copy2(archivos_csv[0], archivo_destino)

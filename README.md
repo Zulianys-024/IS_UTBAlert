@@ -74,7 +74,9 @@ El sistema se encuentra estructurado en capas modulares que garantizan la separa
    python scripts/load_kaggle.py
    ```
 
-   Si quieres cambiar el dataset o el nombre del archivo final:
+   Por defecto, se descarga `waleedejaz/predict-students-dropout-and-academic-success` y se sobrescribe `data/raw/uci_dropout_raw.csv`. El script de procesamiento lee ese archivo con el separador `;`.
+
+   Para elegir otro dataset, cambiar el CSV descargado o cambiar el nombre del archivo final:
    ```bash
-   python scripts/load_kaggle.py --dataset usuario/nombre-dataset --output-name nombre_archivo.csv
+   python scripts/load_kaggle.py --dataset usuario/nombre-dataset --csv-file archivo.csv --output-name nombre_archivo.csv
    ```
