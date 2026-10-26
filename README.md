@@ -36,5 +36,3 @@ El sistema se encuentra estructurado en capas modulares que garantizan la separa
 1. Clona este repositorio:
    ```bash
    git clone [https://github.com/Zulianys-024/IS_UTBAlert.git](https://github.com/Zulianys-024/IS_UTBAlert.git)
-
-## verificacion de la instalación de dependencias
