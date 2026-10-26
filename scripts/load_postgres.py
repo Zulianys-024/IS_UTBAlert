@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 import psycopg2
 from psycopg2 import extras
+# pyrefly: ignore[missing-import]
 from dotenv import load_dotenv
 
 # Carga automáticamente las variables del archivo .env en la raíz del proyecto
