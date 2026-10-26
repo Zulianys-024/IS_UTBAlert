@@ -80,3 +80,20 @@ El sistema se encuentra estructurado en capas modulares que garantizan la separa
    ```bash
    python scripts/load_kaggle.py --dataset usuario/nombre-dataset --csv-file archivo.csv --output-name nombre_archivo.csv
    ```
+
+## 🐘 Carga de datos en PostgreSQL
+
+El repositorio **no está conectado permanentemente a una base de datos ni sincroniza datos con GitHub**. `scripts/load_postgres.py` abre una conexión cuando se ejecuta, lee `data/processed/estudiantes_academicos.csv` e intenta insertar sus filas en PostgreSQL. La configuración actual apunta a una instancia local (`localhost`) y a la base `proyecto_desercion`; por eso, cada persona debe tener PostgreSQL instalado y configurar su propia conexión.
+
+Antes de ejecutar el cargador:
+
+1. Crea la base de datos `proyecto_desercion` en PostgreSQL.
+2. Conéctate a esa base y ejecuta el SQL de `db/schema.sql` para crear la tabla `estudiantes_academicos`.
+3. Verifica que los datos de conexión de `scripts/load_postgres.py` correspondan a tu instancia y usuario local.
+4. Confirma que el CSV procesado tenga las ocho columnas que el script inserta, en el mismo orden: `student_id`, `course`, `curricular_units_1st_sem_enrolled`, `curricular_units_2nd_sem_enrolled`, `curricular_units_1st_sem_grade`, `curricular_units_2nd_sem_grade`, `target` y `attendance_percentage`.
+5. Ejecuta desde la raíz del proyecto:
+   ```bash
+   python scripts/load_postgres.py
+   ```
+
+La carga solo se realiza al ejecutar el script y queda guardada en la base local a la que se conectó. El script no crea la base de datos por sí solo. No publiques contraseñas ni las guardes en el repositorio; para compartir el proyecto, cada integrante debe usar sus propias credenciales. La columna `student_id` es clave primaria, así que volver a cargar filas con identificadores ya existentes puede producir un error por duplicados.
