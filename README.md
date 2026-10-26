@@ -104,10 +104,4 @@ La aplicación y los scripts se conectan a PostgreSQL usando la variable de ento
 
 `scripts/load_postgres.py` requiere que `DATABASE_URL` esté definida y da un error claro si falta. La carga inserta las columnas `student_id`, `course`, `curricular_units_1st_sem_enrolled`, `curricular_units_2nd_sem_enrolled`, `curricular_units_1st_sem_grade`, `curricular_units_2nd_sem_grade`, `target` y `attendance_percentage`. La columna `student_id` es clave primaria; repetir una carga con identificadores existentes produce un error por duplicados.
 
-### Acceso para integrantes del equipo
 
-El repositorio no incluye la contraseña ni la URL real de Supabase. Quien clone el proyecto debe solicitar al responsable de la base la variable `DATABASE_URL` por un canal privado y configurarla en su propio entorno antes de ejecutar `scripts/load_postgres.py`. El responsable debe compartir solo el acceso que cada integrante necesita y cambiar la contraseña si la URL se expone accidentalmente.
-
-No agregues la URL real a este README, a un archivo `.env` versionado, al código ni a GitHub. La URL de PostgreSQL permite acceso directo a la base con los permisos de su usuario; cualquier persona que la obtenga podría consultar o modificar datos según esos permisos.
-
-Para una demo pública donde cualquier visitante solo necesite consultar datos, no compartas `DATABASE_URL`. La arquitectura debe exponer lecturas mediante el backend de la aplicación o la API de Supabase con una clave publicable y políticas RLS de solo lectura. Las claves secretas y las contraseñas de PostgreSQL permanecen únicamente en el servidor. La clave publicable por sí sola no autoriza acceso: RLS y los permisos deben configurarse correctamente. Consulta [seguridad de datos en Supabase](https://supabase.com/docs/guides/database/secure-data) y [claves de API](https://supabase.com/docs/guides/getting-started/api-keys).
