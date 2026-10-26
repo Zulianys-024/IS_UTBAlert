@@ -1,4 +1,4 @@
-CREATE TABLE estudiantes_academicos (
+CREATE TABLE IF NOT EXISTS  estudiantes_academicos (
     student_id VARCHAR(50) PRIMARY KEY,
     course INT,
     curricular_units_1st_sem_enrolled INT,
