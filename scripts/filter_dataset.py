@@ -10,26 +10,25 @@ df = pd.read_csv(source_file, sep=";")
 # -----------------------------
 # Seleccionar solo las variables que vas a usar
 # -----------------------------
-# Cambia estas columnas por las que realmente te interesen.
-# IMPORTANTE: los nombres deben coincidir exactamente con los encabezados del CSV.
-#columns_to_keep = [
-    #"Age at enrollment",     # ejemplo: edad al matricularse
-    #"Gender",                # ejemplo: género
-    #"Admission grade",       # ejemplo: nota de admisión
-    #"Scholarship holder",    # ejemplo: beca
-    #"Target",                # etiqueta / resultado objetivo
-    # "Marital status",
-    # "Application mode",
-    # "Course",
-    # "Previous qualification",
-    # agrega aquí las variables que quieras usar
-#]
+# Estas son las columnas que vas a utilizar en tu caso:
+columns_to_keep = [
+    "Course",
+    "Curricular units 1st sem (enrolled)",
+    "Curricular units 2nd sem (enrolled)",
+    "Curricular units 1st sem (grade)",
+    "Curricular units 2nd sem (grade)",
+    "Target",
+    # Si más adelante cambias de variables, solo ajustas esta lista.
+    # Ejemplo:
+    # "Age at enrollment",
+    # "Gender",
+    # "Admission grade",
+]
 
 # Si quieres conservar solo esas columnas:
-#df = df[columns_to_keep]
+df = df[columns_to_keep]
 
-# Si no quieres usar la variable "Target" como característica, la puedes quitar
-# de la lista anterior y dejarla solo si la necesitas como etiqueta.
+# Si quieres volver a todas las columnas, comenta la línea anterior.
 
 output_file.parent.mkdir(parents=True, exist_ok=True)
 df.to_csv(output_file, index=False)
