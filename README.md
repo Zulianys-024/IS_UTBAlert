@@ -35,4 +35,46 @@ El sistema se encuentra estructurado en capas modulares que garantizan la separa
 
 1. Clona este repositorio:
    ```bash
-   git clone [https://github.com/Zulianys-024/IS_UTBAlert.git](https://github.com/Zulianys-024/IS_UTBAlert.git)
+   git clone https://github.com/Zulianys-024/IS_UTBAlert.git
+   cd IS_UTBAlert
+   ```
+
+2. Instala dependencias del proyecto:
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+3. Configura las credenciales de Kaggle de una de estas formas:
+
+   - Recomendado: coloca el archivo `kaggle.json` descargado desde Kaggle en `%USERPROFILE%\.kaggle\kaggle.json` (crea la carpeta `.kaggle` si no existe). No lo guardes dentro del repositorio.
+   - Alternativa en PowerShell:
+     ```powershell
+     $env:KAGGLE_USERNAME = "tu_usuario"
+     $env:KAGGLE_KEY = "tu_api_key"
+     ```
+   - También puedes usar un API token:
+     ```powershell
+     $env:KAGGLE_API_TOKEN = "tu_api_token"
+     ```
+
+   En CMD, las variables de entorno se establecen así:
+   ```bash
+   set KAGGLE_USERNAME=tu_usuario
+   set KAGGLE_KEY=tu_api_key
+   ```
+
+   En Linux/macOS:
+   ```bash
+   export KAGGLE_USERNAME=tu_usuario
+   export KAGGLE_KEY=tu_api_key
+   ```
+
+4. Ejecuta el script para descargar el dataset:
+   ```bash
+   python scripts/load_kaggle.py
+   ```
+
+   Si quieres cambiar el dataset o el nombre del archivo final:
+   ```bash
+   python scripts/load_kaggle.py --dataset usuario/nombre-dataset --output-name nombre_archivo.csv
+   ```
