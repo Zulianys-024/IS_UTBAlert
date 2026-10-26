@@ -4,12 +4,18 @@ import sys
 import pandas as pd
 import psycopg2
 from psycopg2 import extras
+from dotenv import load_dotenv
+
+# Carga automáticamente las variables del archivo .env en la raíz del proyecto
+load_dotenv()
 
 def main():
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         print(
-            "Falta configurar DATABASE_URL con la URL de conexión de PostgreSQL.",
+            "Falta configurar DATABASE_URL.\n"
+            "Crea un archivo .env en la raíz del proyecto con:\n"
+            "  DATABASE_URL=postgresql://postgres:PASSWORD@db.XXX.supabase.co:5432/postgres",
             file=sys.stderr,
         )
         return 1
@@ -45,7 +51,8 @@ def main():
 
     query = (
         f"INSERT INTO estudiantes_academicos ({', '.join(columnas_postgres)}) "
-        f"VALUES ({', '.join(['%s'] * len(columnas_postgres))})"
+        f"VALUES ({', '.join(['%s'] * len(columnas_postgres))}) "
+        f"ON CONFLICT (student_id) DO NOTHING"
     )
     datos = list(df[columnas_postgres].itertuples(index=False, name=None))
 
@@ -60,3 +67,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+    
