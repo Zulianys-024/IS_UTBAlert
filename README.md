@@ -15,23 +15,24 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 ---
 
 ## 🛠️ Tecnologías y Herramientas
-El proyecto está construido bajo un ecosistema en Python y metodologías modernas de desarrollo ágil:
-* **Frontend y Backend:** Python / Dash (Plotly) para la creación del *dashboard* interactivo y la lógica de negocio integrada.
-* **Base de Datos:** Relacional con estructuración de datos simulados (*mock data*).
+El código incluido actualmente implementa la generación de datos sintéticos en Python y su carga en PostgreSQL:
+* **Generación de datos:** Python, NumPy y pandas.
+* **Base de Datos:** PostgreSQL, que puede alojarse en Supabase.
 * **Control de Versiones:** Git y GitHub.
 * **Gestión de Proyectos:** Tablero ágil con metodología **Kanban** utilizando **Trello**.
 
----
-
-## 📊 Arquitectura del Sistema
-El sistema se encuentra estructurado en capas modulares que garantizan la separación de responsabilidades:
-1. **Capa de Presentación:** Interfaz web tipo *dashboard* desarrollada en Dash para visualización de métricas y alertas.
-2. **Capa de Lógica de Negocio:** Motor de cálculo de riesgo que procesa las variables de desempeño y bienestar, generando clasificaciones (Riesgo Bajo, Medio, Alto).
-3. **Capa de Datos:** Gestor de acceso a la base de datos simulada estructurada bajo los parámetros de retención de la UTB.
+El dashboard web con Dash/Plotly forma parte del objetivo del proyecto, pero su código y punto de entrada todavía no están incluidos en este repositorio.
 
 ---
 
-## 🚀 Instalación y Ejecución Local
+## 📊 Flujo de datos implementado
+1. `scripts/simulado.py` genera los CSV sintéticos de estudiantes e historial en `data/synthetic/` y `data/processed/`.
+2. `scripts/load_postgres.py` valida esos archivos y los carga en los catálogos y tablas definidos en `db/schema.sql`.
+3. El dashboard y las consultas de alertas aún deben conectarse a estas tablas.
+
+---
+
+## 🚀 Configuración y carga local
 
 1. Clona este repositorio:
    ```bash
@@ -44,46 +45,15 @@ El sistema se encuentra estructurado en capas modulares que garantizan la separa
    python -m pip install -r requirements.txt
    ```
 
-3. Configura las credenciales de Kaggle de una de estas formas:
-
-   - Recomendado: coloca el archivo `kaggle.json` descargado desde Kaggle en `%USERPROFILE%\.kaggle\kaggle.json` (crea la carpeta `.kaggle` si no existe). No lo guardes dentro del repositorio.
-   - Alternativa en PowerShell:
-     ```powershell
-     $env:KAGGLE_USERNAME = "tu_usuario"
-     $env:KAGGLE_KEY = "tu_api_key"
-     ```
-   - También puedes usar un API token:
-     ```powershell
-     $env:KAGGLE_API_TOKEN = "tu_api_token"
-     ```
-
-   En CMD, las variables de entorno se establecen así:
+3. Usa los CSV incluidos en `data/processed/` para poblar la base de datos. Para volver a generar los datos sintéticos, ejecuta:
    ```bash
-   set KAGGLE_USERNAME=tu_usuario
-   set KAGGLE_KEY=tu_api_key
+   python scripts/simulado.py
    ```
-
-   En Linux/macOS:
-   ```bash
-   export KAGGLE_USERNAME=tu_usuario
-   export KAGGLE_KEY=tu_api_key
-   ```
-
-4. Ejecuta el script para descargar el dataset:
-   ```bash
-   python scripts/load_kaggle.py
-   ```
-
-   Por defecto, se descarga `waleedejaz/predict-students-dropout-and-academic-success` y se sobrescribe `data/raw/uci_dropout_raw.csv`. El script de procesamiento lee ese archivo con el separador `;`.
-
-   Para elegir otro dataset, cambiar el CSV descargado o cambiar el nombre del archivo final:
-   ```bash
-   python scripts/load_kaggle.py --dataset usuario/nombre-dataset --csv-file archivo.csv --output-name nombre_archivo.csv
-   ```
+   El generador guarda los originales en `data/synthetic/` y copias para la carga en `data/processed/`. No se requieren credenciales de Kaggle ni descargas externas.
 
 ## 🐘 Carga de datos en PostgreSQL
 
-La aplicación y los scripts se conectan a PostgreSQL usando la variable de entorno `DATABASE_URL`. Puede ser la URL de una base administrada (por ejemplo, Supabase, Neon o Railway) o de una instancia local. Cada integrante puede usar la misma base compartida, sin instalar PostgreSQL localmente. El navegador nunca se conecta directamente a la base: solo el servidor de la aplicación debe tener acceso a las credenciales.
+El cargador usa la variable de entorno `DATABASE_URL` para conectarse a PostgreSQL. Puede ser la URL de Supabase u otra base administrada. El navegador nunca se conecta directamente a la base: las credenciales se configuran solo en el entorno donde corre el cargador o el servidor.
 
 1. Crea una base PostgreSQL en tu proveedor y copia su URL de conexión. Mantén habilitado SSL si el proveedor lo requiere.
 2. En la consola donde correrás el cargador, define la variable. En PowerShell:
@@ -95,14 +65,14 @@ La aplicación y los scripts se conectan a PostgreSQL usando la variable de ento
    export DATABASE_URL="postgresql://usuario:contraseña@host:5432/nombre_base?sslmode=require"
    ```
    En un despliegue web, agrega `DATABASE_URL` en la sección de variables/secretos del proveedor de hosting. No la pongas en el código, README, GitHub ni en el frontend.
-3. Ejecuta `db/schema.sql` en esa base para crear `estudiantes_academicos`.
-4. Instala dependencias y carga el CSV procesado:
+3. Ejecuta `db/schema.sql` en esa base para crear los catálogos `PROGRAMA_ACADEMICO` y `PERIODO_ACADEMICO`, además de `ESTUDIANTE` y `VARIABLES_ACADEMICAS`. El esquema empieza eliminando esas tablas; ejecutarlo de nuevo borra los datos que ya contengan.
+4. Instala las dependencias y carga los dos CSV sintéticos desde `data/processed/`:
    ```bash
    python -m pip install -r requirements.txt
    python scripts/load_postgres.py
    ```
 
-`scripts/load_postgres.py` requiere que `DATABASE_URL` esté definida y da un error claro si falta. La carga inserta las columnas `student_id`, `course`, `curricular_units_1st_sem_enrolled`, `curricular_units_2nd_sem_enrolled`, `curricular_units_1st_sem_grade`, `curricular_units_2nd_sem_grade`, `target` y `attendance_percentage`. La columna `student_id` es clave primaria; repetir una carga con identificadores existentes produce un error por duplicados.
+`scripts/load_postgres.py` valida los archivos, registra los programas y periodos que requieren las claves foráneas y después carga estudiantes e historial. Las cargas repetidas actualizan filas existentes por sus claves; no eliminan registros que hayan desaparecido de los CSV. El script requiere que el esquema nuevo ya exista en la base.
 
 ### Acceso para integrantes del equipo
 
