@@ -8,6 +8,7 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 * **Brayan Maluenga**
 * **Zulianys Orozco**
 * **Juan Hernandez**
+* **alguien mas**
 
 * **Curso / Grupo:** Ingeniería de Software 1206 (Séptimo Semestre)
 * **Docente:** Aisner Jose Marrugo Juliao
