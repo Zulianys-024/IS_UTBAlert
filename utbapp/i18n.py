@@ -21,6 +21,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "demo.title": "Datos de demostración.",
         "demo.text": " La información proviene de los CSV sintéticos del repositorio y se usa para ilustrar el flujo de acompañamiento.",
         "demo.action": "Entendido",
+        # RF-05: Alerta temprana crítica
+        "rf05.banner_title": "Alerta Temprana Crítica: {count} Estudiantes en Riesgo Alto",
+        "rf05.banner_desc": "Se han identificado casos de atención prioritaria. Pulsa aquí para revisar el listado con filtro de riesgo alto activado.",
+        "rf05.banner_btn": "Ver estudiantes en riesgo alto →",
         # Menú de usuario
         "menu.profile": "Mi perfil",
         "menu.language": "Idioma",
@@ -206,6 +210,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "demo.title": "Demo data.",
         "demo.text": " The information comes from the repository's synthetic CSV files and illustrates the support workflow.",
         "demo.action": "Got it",
+        # RF-05: Critical early warning
+        "rf05.banner_title": "Critical Early Warning: {count} Students at High Risk",
+        "rf05.banner_desc": "High-priority cases identified. Click here to review student records filtered by high risk.",
+        "rf05.banner_btn": "View high-risk students →",
         "menu.profile": "My profile",
         "menu.language": "Language",
         "menu.theme": "Theme",
