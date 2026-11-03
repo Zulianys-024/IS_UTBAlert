@@ -1,0 +1,1 @@
+"""Aplicación UTB Alertas Tempranas."""

@@ -1,19 +1,11 @@
-# Variables de entorno (contienen credenciales, NO subir al repo)
-.env
-
-# Python
+# Python virtual environments and bytecode
+.venv/
+venv/
 __pycache__/
 *.py[cod]
-*.egg-info/
-dist/
-build/
-.venv/
-env/
 
-# Datos (pueden ser grandes)
-data/raw/
-data/processed/
-
-# IDE
-.vscode/
-.idea/
+# Local secrets
+.env
+.env.*
+!.env.example
+.pytest_cache/

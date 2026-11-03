@@ -1,10 +1,11 @@
-# 🚨 Sistema de Alertas Tempranas (UTBAlert) - UTB
+# Sistema de Alertas Tempranas (UTBAlert) - UTB
 
 Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolívar (UTB)**, diseñado para centralizar variables académicas, procesar información estudiantil mediante datos simulados (*mock data*) y generar alertas tempranas orientadas a respaldar el seguimiento oportuno por parte del área de bienestar y acompañamiento estudiantil.
 
 ---
 
-## 👥 Equipo de Trabajo
+## Equipo de Trabajo
+
 * **Brayan Maluenga**
 * **Zulianys Orozco**
 * **Juan Hernandez**
@@ -14,102 +15,103 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 
 ---
 
-## 🛠️ Tecnologías y Herramientas
-El proyecto está construido bajo un ecosistema en Python y metodologías modernas de desarrollo ágil:
-* **Frontend y Backend:** Python / Dash (Plotly) para la creación del *dashboard* interactivo y la lógica de negocio integrada.
-* **Base de Datos:** Relacional con estructuración de datos simulados (*mock data*).
+## Tecnologías y Herramientas
+
+El código incluido implementa la generación de datos sintéticos en Python, su carga en PostgreSQL y un dashboard Dash/Plotly:
+
+* **Generación de datos:** Python, NumPy y pandas.
+* **Dashboard:** Dash y Plotly.
+* **Base de Datos:** PostgreSQL, que puede alojarse en Supabase.
 * **Control de Versiones:** Git y GitHub.
 * **Gestión de Proyectos:** Tablero ágil con metodología **Kanban** utilizando **Trello**.
 
 ---
 
-## 📊 Arquitectura del Sistema
-El sistema se encuentra estructurado en capas modulares que garantizan la separación de responsabilidades:
-1. **Capa de Presentación:** Interfaz web tipo *dashboard* desarrollada en Dash para visualización de métricas y alertas.
-2. **Capa de Lógica de Negocio:** Motor de cálculo de riesgo que procesa las variables de desempeño y bienestar, generando clasificaciones (Riesgo Bajo, Medio, Alto).
-3. **Capa de Datos:** Gestor de acceso a la base de datos simulada estructurada bajo los parámetros de retención de la UTB.
+## Flujo de datos implementado
+
+1. `scripts/simulado.py` genera los CSV sintéticos de estudiantes e historial en `data/synthetic/` y `data/processed/`.
+2. `scripts/load_postgres.py` valida esos archivos y los carga en los catálogos y tablas definidos en `db/schema.sql`.
+3. `utbapp/data_access.py` carga los CSV para la demo; el motor de riesgo calcula el indicador sobre el historial más reciente de cada estudiante.
+4. `app.py` presenta el dashboard con filtros, gráficas, alertas, seguimientos y exportaciones.
 
 ---
 
-## 🚀 Instalación y Ejecución Local
+## Ejecutar el dashboard localmente
+
+En Windows, abre PowerShell en la carpeta del proyecto y ejecuta estos comandos,
+uno por uno. Si PowerShell muestra un error con `&`, no pegues `&` al final de
+`run.py` ni uses el botón "Run Code" de una extensión; inicia la aplicación
+desde la terminal integrada:
+
+```powershell
+python -m venv .venv
+& ".\.venv\Scripts\python.exe" -m pip install -r requirements.txt
+& ".\.venv\Scripts\python.exe" run.py
+```
+
+Después abre `http://localhost:8050`. El servidor queda disponible solo en este equipo y no requiere PostgreSQL para la demostración. La cuenta de demostración es:
+
+* Usuario: `camila`
+* Contraseña: `demo`
+
+La aplicación carga por defecto `data/processed/estudiantes_utb_sinteticos.csv` y `data/processed/historial_academico_utb_sintetico.csv`. Puede ejecutarse sin credenciales de PostgreSQL; `DATABASE_URL` continúa reservado para el cargador existente.
+
+---
+
+## Dashboard implementado
+
+* Shell UTB con Inicio, Estudiantes, Variables de riesgo, Alertas, Seguimientos y Reportes.
+* Filtros por programa, periodo, nivel, estado académico, riesgo y estado final.
+* Motor de riesgo aislado y explicable en `utbapp/risk_engine.py`.
+* Dona de distribución, tendencia de alertas, indicadores y tablas priorizadas.
+* Exportación CSV y XLSX de los conjuntos filtrados.
+* Registro de seguimientos en `data/seguimientos_demo.json`, única escritura de la interfaz en modo demostración.
+* Estado vacío de seguimientos cuando aún no existe ninguna nota.
+* Manifiesto de rutas en `/manus-routes.json`.
+
+---
+
+## Configuración y carga local
 
 1. Clona este repositorio:
    ```bash
    git clone https://github.com/Zulianys-024/IS_UTBAlert.git
    cd IS_UTBAlert
    ```
-
 2. Instala dependencias del proyecto:
    ```bash
    python -m pip install -r requirements.txt
    ```
-
-3. Ejecuta la aplicación web (Dashboard interactivo):
+3. Usa los CSV incluidos en `data/processed/` para poblar la base de datos. Para volver a generar los datos sintéticos, ejecuta:
    ```bash
-   python app.py
+   python scripts/simulado.py
    ```
-   Abre tu navegador en `http://127.0.0.1:8050`. Podrás iniciar sesión con las credenciales de bienestar:
-   - **Usuario:** `bienestar@utb.edu.co`
-   - **Contraseña:** `utb2026bienestar`
+   El generador guarda los originales en `data/synthetic/` y copias para la carga en `data/processed/`. No se requieren credenciales de Kaggle ni descargas externas.
 
-4. (Opcional) Configura las credenciales de Kaggle de una de estas formas:
+## Carga en PostgreSQL
 
-   - Recomendado: coloca el archivo `kaggle.json` descargado desde Kaggle en `%USERPROFILE%\.kaggle\kaggle.json` (crea la carpeta `.kaggle` si no existe). No lo guardes dentro del repositorio.
-   - Alternativa en PowerShell:
-     ```powershell
-     $env:KAGGLE_USERNAME = "tu_usuario"
-     $env:KAGGLE_KEY = "tu_api_key"
-     ```
-   - También puedes usar un API token:
-     ```powershell
-     $env:KAGGLE_API_TOKEN = "tu_api_token"
-     ```
+El cargador usa la variable de entorno `DATABASE_URL` para conectarse a PostgreSQL. Puede ser la URL de Supabase u otra base administrada. El navegador nunca se conecta directamente a la base: las credenciales se configuran solo en el entorno donde corre el cargador o el servidor.
 
-   En CMD, las variables de entorno se establecen así:
-   ```bash
-   set KAGGLE_USERNAME=tu_usuario
-   set KAGGLE_KEY=tu_api_key
-   ```
-
-   En Linux/macOS:
-   ```bash
-   export KAGGLE_USERNAME=tu_usuario
-   export KAGGLE_KEY=tu_api_key
-   ```
-
-4. Ejecuta el script para descargar el dataset:
-   ```bash
-   python scripts/load_kaggle.py
-   ```
-
-   Por defecto, se descarga `waleedejaz/predict-students-dropout-and-academic-success` y se sobrescribe `data/raw/uci_dropout_raw.csv`. El script de procesamiento lee ese archivo con el separador `;`.
-
-   Para elegir otro dataset, cambiar el CSV descargado o cambiar el nombre del archivo final:
-   ```bash
-   python scripts/load_kaggle.py --dataset usuario/nombre-dataset --csv-file archivo.csv --output-name nombre_archivo.csv
-   ```
-
-## 🐘 Carga de datos en PostgreSQL
-
-La aplicación y los scripts se conectan a PostgreSQL usando la variable de entorno `DATABASE_URL`. Puede ser la URL de una base administrada (por ejemplo, Supabase, Neon o Railway) o de una instancia local. Cada integrante puede usar la misma base compartida, sin instalar PostgreSQL localmente. El navegador nunca se conecta directamente a la base: solo el servidor de la aplicación debe tener acceso a las credenciales.
-
-1. Crea una base PostgreSQL en tu proveedor y copia su URL de conexión. Mantén habilitado SSL si el proveedor lo requiere.
-2. En la consola donde correrás el cargador, define la variable. En PowerShell:
-   ```powershell
-   $env:DATABASE_URL = "postgresql://usuario:contraseña@host:5432/nombre_base?sslmode=require"
-   ```
-   En Linux/macOS:
+1. Crea una base PostgreSQL y configura la variable. En Linux/macOS:
    ```bash
    export DATABASE_URL="postgresql://usuario:contraseña@host:5432/nombre_base?sslmode=require"
    ```
-   En un despliegue web, agrega `DATABASE_URL` en la sección de variables/secretos del proveedor de hosting. No la pongas en el código, README, GitHub ni en el frontend.
-3. Ejecuta `db/schema.sql` en esa base para crear `estudiantes_academicos`.
-4. Instala dependencias y carga el CSV procesado:
+   No pongas la URL real en el README, en un archivo `.env` versionado, en el código ni en GitHub.
+2. Ejecuta `db/schema.sql` para crear los catálogos, `ESTUDIANTE` y `VARIABLES_ACADEMICAS`. El esquema empieza eliminando esas tablas; ejecutarlo de nuevo borra los datos que ya contengan.
+3. Carga los dos CSV sintéticos:
    ```bash
-   python -m pip install -r requirements.txt
    python scripts/load_postgres.py
    ```
 
-`scripts/load_postgres.py` requiere que `DATABASE_URL` esté definida y da un error claro si falta. La carga inserta las columnas `student_id`, `course`, `curricular_units_1st_sem_enrolled`, `curricular_units_2nd_sem_enrolled`, `curricular_units_1st_sem_grade`, `curricular_units_2nd_sem_grade`, `target` y `attendance_percentage`. La columna `student_id` es clave primaria; repetir una carga con identificadores existentes produce un error por duplicados.
+El cargador valida columnas, periodos, duplicados, estudiantes huérfanos y coherencia de programas antes de hacer upsert.
 
+---
 
+## Suposiciones del motor de riesgo
+
+* C5 usa `nivel_actual × 10 %` como avance esperado de un plan de 10 niveles y exige como mínimo el 80 % de ese avance.
+* C6 marca riesgo por cancelaciones cuando son mayores o iguales a 2 en el periodo.
+* Alto = tres o más criterios, o C1 y C2 simultáneamente; Medio = uno o dos; Bajo = ninguno.
+* El cálculo opera sobre el registro más reciente por estudiante, o sobre el periodo seleccionado.
+* `estado_final` y `deserto` se muestran como resultado retrospectivo, pero no alimentan el riesgo.
+* Los umbrales están centralizados en `DEFAULT_THRESHOLDS`; no están embebidos en los callbacks de la interfaz.

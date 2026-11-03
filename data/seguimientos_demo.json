@@ -1,0 +1,12 @@
+[
+  {
+    "estudiante_id": "T00011234",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "fdfdfdfdf",
+    "proxima_accion": "dfdfd",
+    "fecha_proxima_accion": "2026-11-19",
+    "estado": "Nueva",
+    "created_at": "2026-11-02T17:17:05"
+  }
+]
