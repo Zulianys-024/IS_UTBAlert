@@ -1,10 +1,11 @@
-# 🚨 Sistema de Alertas Tempranas (UTBAlert) - UTB
+# Sistema de Alertas Tempranas (UTBAlert) - UTB
 
 Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolívar (UTB)**, diseñado para centralizar variables académicas, procesar información estudiantil mediante datos simulados (*mock data*) y generar alertas tempranas orientadas a respaldar el seguimiento oportuno por parte del área de bienestar y acompañamiento estudiantil.
 
 ---
 
-## 👥 Equipo de Trabajo
+## Equipo de Trabajo
+
 * **Brayan Maluenga**
 * **Zulianys Orozco**
 * **Juan Hernandez**
@@ -14,70 +15,103 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 
 ---
 
-## 🛠️ Tecnologías y Herramientas
-El código incluido actualmente implementa la generación de datos sintéticos en Python y su carga en PostgreSQL:
+## Tecnologías y Herramientas
+
+El código incluido implementa la generación de datos sintéticos en Python, su carga en PostgreSQL y un dashboard Dash/Plotly:
+
 * **Generación de datos:** Python, NumPy y pandas.
+* **Dashboard:** Dash y Plotly.
 * **Base de Datos:** PostgreSQL, que puede alojarse en Supabase.
 * **Control de Versiones:** Git y GitHub.
 * **Gestión de Proyectos:** Tablero ágil con metodología **Kanban** utilizando **Trello**.
 
-El dashboard web con Dash/Plotly forma parte del objetivo del proyecto, pero su código y punto de entrada todavía no están incluidos en este repositorio.
-
 ---
 
-## 📊 Flujo de datos implementado
+## Flujo de datos implementado
+
 1. `scripts/simulado.py` genera los CSV sintéticos de estudiantes e historial en `data/synthetic/` y `data/processed/`.
 2. `scripts/load_postgres.py` valida esos archivos y los carga en los catálogos y tablas definidos en `db/schema.sql`.
-3. El dashboard y las consultas de alertas aún deben conectarse a estas tablas.
+3. `utbapp/data_access.py` carga los CSV para la demo; el motor de riesgo calcula el indicador sobre el historial más reciente de cada estudiante.
+4. `app.py` presenta el dashboard con filtros, gráficas, alertas, seguimientos y exportaciones.
 
 ---
 
-## 🚀 Configuración y carga local
+## Ejecutar el dashboard localmente
+
+En Windows, abre PowerShell en la carpeta del proyecto y ejecuta estos comandos,
+uno por uno. Si PowerShell muestra un error con `&`, no pegues `&` al final de
+`run.py` ni uses el botón "Run Code" de una extensión; inicia la aplicación
+desde la terminal integrada:
+
+```powershell
+python -m venv .venv
+& ".\.venv\Scripts\python.exe" -m pip install -r requirements.txt
+& ".\.venv\Scripts\python.exe" run.py
+```
+
+Después abre `http://localhost:8050`. El servidor queda disponible solo en este equipo y no requiere PostgreSQL para la demostración. La cuenta de demostración es:
+
+* Usuario: `camila`
+* Contraseña: `demo`
+
+La aplicación carga por defecto `data/processed/estudiantes_utb_sinteticos.csv` y `data/processed/historial_academico_utb_sintetico.csv`. Puede ejecutarse sin credenciales de PostgreSQL; `DATABASE_URL` continúa reservado para el cargador existente.
+
+---
+
+## Dashboard implementado
+
+* Shell UTB con Inicio, Estudiantes, Variables de riesgo, Alertas, Seguimientos y Reportes.
+* Filtros por programa, periodo, nivel, estado académico, riesgo y estado final.
+* Motor de riesgo aislado y explicable en `utbapp/risk_engine.py`.
+* Dona de distribución, tendencia de alertas, indicadores y tablas priorizadas.
+* Exportación CSV y XLSX de los conjuntos filtrados.
+* Registro de seguimientos en `data/seguimientos_demo.json`, única escritura de la interfaz en modo demostración.
+* Estado vacío de seguimientos cuando aún no existe ninguna nota.
+* Manifiesto de rutas en `/manus-routes.json`.
+
+---
+
+## Configuración y carga local
 
 1. Clona este repositorio:
    ```bash
    git clone https://github.com/Zulianys-024/IS_UTBAlert.git
    cd IS_UTBAlert
    ```
-
 2. Instala dependencias del proyecto:
    ```bash
    python -m pip install -r requirements.txt
    ```
-
 3. Usa los CSV incluidos en `data/processed/` para poblar la base de datos. Para volver a generar los datos sintéticos, ejecuta:
    ```bash
    python scripts/simulado.py
    ```
    El generador guarda los originales en `data/synthetic/` y copias para la carga en `data/processed/`. No se requieren credenciales de Kaggle ni descargas externas.
 
-## 🐘 Carga de datos en PostgreSQL
+## Carga en PostgreSQL
 
 El cargador usa la variable de entorno `DATABASE_URL` para conectarse a PostgreSQL. Puede ser la URL de Supabase u otra base administrada. El navegador nunca se conecta directamente a la base: las credenciales se configuran solo en el entorno donde corre el cargador o el servidor.
 
-1. Crea una base PostgreSQL en tu proveedor y copia su URL de conexión. Mantén habilitado SSL si el proveedor lo requiere.
-2. En la consola donde correrás el cargador, define la variable. En PowerShell:
-   ```powershell
-   $env:DATABASE_URL = "postgresql://usuario:contraseña@host:5432/nombre_base?sslmode=require"
-   ```
-   En Linux/macOS:
+1. Crea una base PostgreSQL y configura la variable. En Linux/macOS:
    ```bash
    export DATABASE_URL="postgresql://usuario:contraseña@host:5432/nombre_base?sslmode=require"
    ```
-   En un despliegue web, agrega `DATABASE_URL` en la sección de variables/secretos del proveedor de hosting. No la pongas en el código, README, GitHub ni en el frontend.
-3. Ejecuta `db/schema.sql` en esa base para crear los catálogos `PROGRAMA_ACADEMICO` y `PERIODO_ACADEMICO`, además de `ESTUDIANTE` y `VARIABLES_ACADEMICAS`. El esquema empieza eliminando esas tablas; ejecutarlo de nuevo borra los datos que ya contengan.
-4. Instala las dependencias y carga los dos CSV sintéticos desde `data/processed/`:
+   No pongas la URL real en el README, en un archivo `.env` versionado, en el código ni en GitHub.
+2. Ejecuta `db/schema.sql` para crear los catálogos, `ESTUDIANTE` y `VARIABLES_ACADEMICAS`. El esquema empieza eliminando esas tablas; ejecutarlo de nuevo borra los datos que ya contengan.
+3. Carga los dos CSV sintéticos:
    ```bash
-   python -m pip install -r requirements.txt
    python scripts/load_postgres.py
    ```
 
-`scripts/load_postgres.py` valida los archivos, registra los programas y periodos que requieren las claves foráneas y después carga estudiantes e historial. Las cargas repetidas actualizan filas existentes por sus claves; no eliminan registros que hayan desaparecido de los CSV. El script requiere que el esquema nuevo ya exista en la base.
+El cargador valida columnas, periodos, duplicados, estudiantes huérfanos y coherencia de programas antes de hacer upsert.
 
-### Acceso para integrantes del equipo
+---
 
-El repositorio no incluye la contraseña ni la URL real de Supabase. Quien clone el proyecto debe solicitar al responsable de la base la variable `DATABASE_URL` por un canal privado y configurarla en su propio entorno antes de ejecutar `scripts/load_postgres.py`. El responsable debe compartir solo el acceso que cada integrante necesita y cambiar la contraseña si la URL se expone accidentalmente.
+## Suposiciones del motor de riesgo
 
-No agregues la URL real a este README, a un archivo `.env` versionado, al código ni a GitHub. La URL de PostgreSQL permite acceso directo a la base con los permisos de su usuario; cualquier persona que la obtenga podría consultar o modificar datos según esos permisos.
-
-Para una demo pública donde cualquier visitante solo necesite consultar datos, no compartas `DATABASE_URL`. La arquitectura debe exponer lecturas mediante el backend de la aplicación o la API de Supabase con una clave publicable y políticas RLS de solo lectura. Las claves secretas y las contraseñas de PostgreSQL permanecen únicamente en el servidor. La clave publicable por sí sola no autoriza acceso: RLS y los permisos deben configurarse correctamente. Consulta [seguridad de datos en Supabase](https://supabase.com/docs/guides/database/secure-data) y [claves de API](https://supabase.com/docs/guides/getting-started/api-keys).
+* C5 usa `nivel_actual × 10 %` como avance esperado de un plan de 10 niveles y exige como mínimo el 80 % de ese avance.
+* C6 marca riesgo por cancelaciones cuando son mayores o iguales a 2 en el periodo.
+* Alto = tres o más criterios, o C1 y C2 simultáneamente; Medio = uno o dos; Bajo = ninguno.
+* El cálculo opera sobre el registro más reciente por estudiante, o sobre el periodo seleccionado.
+* `estado_final` y `deserto` se muestran como resultado retrospectivo, pero no alimentan el riesgo.
+* Los umbrales están centralizados en `DEFAULT_THRESHOLDS`; no están embebidos en los callbacks de la interfaz.
