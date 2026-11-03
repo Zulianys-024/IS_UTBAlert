@@ -252,16 +252,9 @@ def header(lang, dark, profile):
         [
             html.Div(
                 [
-                    html.Div("UTB", className="brand-mark"),
-                    html.Div(
-                        [
-                            html.Div("Universidad Tecnológica", className="brand-small"),
-                            html.Div("de Bolívar", className="brand-small"),
-                        ],
-                        className="brand-copy",
-                    ),
+                    html.Img(src="/assets/logo.png", alt="UTB", style={"height": "42px", "objectFit": "contain"}),
                     html.Div(className="brand-divider"),
-                    html.Div("Alertas Tempranas", className="product-name"),
+                    html.Div("UTBAlert - Sistema de Alertas Tempranas", className="product-name"),
                 ],
                 className="brand",
             ),
@@ -523,8 +516,8 @@ def trend_figure(lang, dark):
         hovertemplate="%{x}<br>%{y}<extra></extra>",
     )
     fig.update_layout(
-        height=230,
-        margin=dict(l=0, r=0, t=5, b=0),
+        height=250,
+        margin=dict(l=0, r=0, t=10, b=25),
         paper_bgcolor=theme["paper"],
         plot_bgcolor=theme["plot"],
         xaxis_title=None,
@@ -541,6 +534,7 @@ def trend_figure(lang, dark):
         tickmode="array",
         tickvals=counts["periodo"].tolist(),
         ticktext=counts["periodo"].tolist(),
+        tickpad=10,
     )
     fig.update_yaxes(gridcolor=theme["grid"], zeroline=False)
     return fig
@@ -1330,11 +1324,7 @@ def login_page(lang):
                 [
                     html.Div(
                         [
-                            html.Div("UTB", className="login-logo-mark"),
-                            html.Div(
-                                [html.Span("Universidad Tecnológica"), html.Span("de Bolívar")],
-                                className="login-logo-copy",
-                            ),
+                            html.Img(src="/assets/logo2.png", alt="UTB", style={"height": "40px", "objectFit": "contain"}),
                             html.Div(className="login-logo-divider"),
                             html.Div(tr(lang, "login.product"), className="login-logo-product"),
                         ],

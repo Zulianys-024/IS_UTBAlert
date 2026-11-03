@@ -170,7 +170,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "col.next_action": "Próxima acción",
         # Inicio de sesión
         "login.portal": "PORTAL INSTITUCIONAL",
-        "login.title": "Alertas Tempranas",
+        "login.title": "UTBAlert - Sistema de Alertas Tempranas",
         "login.subtitle": "Ingresa para continuar con tu jornada de acompañamiento.",
         "login.user": "Usuario o correo institucional",
         "login.password": "Contraseña",
@@ -189,7 +189,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "login.footer_right": "Cartagena de Indias, Colombia",
         "login.copyright": "Universidad Tecnológica de Bolívar · 2026",
         "login.legal": "Política de tratamiento de datos",
-        "login.product": "ALERTAS TEMPRANAS",
+        "login.product": "UTBAlert",
         "login.show_password": "Mostrar contraseña",
     },
     "en": {
@@ -344,7 +344,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "col.responsible": "Owner",
         "col.next_action": "Next action",
         "login.portal": "INSTITUTIONAL PORTAL",
-        "login.title": "Early Alerts",
+        "login.title": "UTBAlert - Early Alert System",
         "login.subtitle": "Sign in to continue your support journey.",
         "login.user": "Institutional user or email",
         "login.password": "Password",
@@ -363,7 +363,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "login.footer_right": "Cartagena de Indias, Colombia",
         "login.copyright": "Universidad Tecnológica de Bolívar · 2026",
         "login.legal": "Data processing policy",
-        "login.product": "EARLY ALERTS",
+        "login.product": "UTBAlert",
         "login.show_password": "Show password",
     },
 }
