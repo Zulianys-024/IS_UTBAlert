@@ -24,6 +24,7 @@ from utbapp.i18n import (
     final_label,
     fmt_int,
     fmt_pct,
+    permanence_label,
     risk_label,
     signal_label,
     status_label,
@@ -766,6 +767,182 @@ def home_page(values, lang, dark, profile, dismissed_demo=False):
     ]
 
 
+# === DETALLE DEL ESTUDIANTE ===
+
+STUDENT_PROFILE = students.set_index("estudiante_id")
+LATEST_RECORD = latest_by_student(history).set_index("estudiante_id")
+
+
+def clean_text(value):
+    """Devuelve el texto del valor o ``None`` cuando no hay dato."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    text = str(value).strip()
+    return text if text and text.lower() not in ("nan", "none") else None
+
+
+def fmt_detail(value, decimals=2, suffix=""):
+    """Formatea un número del detalle y usa ``—`` cuando no hay dato."""
+    number = pd.to_numeric(value, errors="coerce")
+    if pd.isna(number):
+        return "—"
+    return f"{float(number):.{decimals}f}{suffix}"
+
+
+def student_detail_data(student_id, lang):
+    """Datos del estudiante seleccionado, desde la misma fuente que el directorio."""
+    if student_id not in STUDENT_PROFILE.index or student_id not in LATEST_RECORD.index:
+        return None
+    info = STUDENT_PROFILE.loc[[student_id]].iloc[0]
+    last = LATEST_RECORD.loc[[student_id]].iloc[0]
+    entry_period = clean_text(info.get("periodo_ingreso"))
+    last_period = clean_text(last.get("periodo_academico"))
+    main_signal = clean_text(last.get("senal_principal"))
+    return {
+        "id": student_id,
+        "programa": clean_text(last.get("programa")) or "—",
+        "nivel": clean_text(last.get("nivel_actual")) or "—",
+        "estado_final": clean_text(info.get("estado_final")),
+        "estado_permanencia": clean_text(info.get("estado_permanencia")) or "—",
+        "periodo_ingreso": period_label(entry_period) if entry_period else "—",
+        "semestres": clean_text(info.get("semestres_cursados")) or "—",
+        "promedio": fmt_detail(last.get("promedio_ponderado_acumulado")),
+        "creditos": clean_text(info.get("creditos_aprobados_totales")) or "—",
+        "avance": fmt_detail(last.get("avance_plan"), 1, "%"),
+        "ultimo_periodo": period_label(last_period) if last_period else "—",
+        "riesgo": clean_text(last.get("riesgo")) or "Bajo",
+        "senal": signal_label(lang, main_signal) if main_signal else "—",
+        "asistencia": fmt_detail(last.get("porcentaje_asistencia"), 1, "%"),
+        "estado_academico": clean_text(last.get("estado_academico")) or "—",
+    }
+
+
+EMPTY_DETAIL = {
+    "id": "",
+    "programa": "—",
+    "nivel": "—",
+    "estado_final": None,
+    "estado_permanencia": "—",
+    "periodo_ingreso": "—",
+    "semestres": "—",
+    "promedio": "—",
+    "creditos": "—",
+    "avance": "—",
+    "ultimo_periodo": "—",
+    "riesgo": "Bajo",
+    "senal": "—",
+    "asistencia": "—",
+    "estado_academico": "—",
+}
+
+
+def detail_item(label, value, tone=None):
+    style = {"color": PALETTE[tone], "fontWeight": "600"} if tone in PALETTE else None
+    return html.Div([html.Dt(label), html.Dd(value, style=style)])
+
+
+def detail_column(title, items):
+    return html.Section([html.H3(title), html.Dl(items)], className="student-detail-col")
+
+
+def student_detail_modal(lang, data):
+    state = permanence_label(lang, data["estado_final"]) if data["estado_final"] else "—"
+    return [
+        html.Div(
+            [
+                html.H2(tr(lang, "detail.title"), id="student-detail-title"),
+                html.Span(data["id"], className="student-detail-code"),
+            ],
+            className="student-detail-head",
+        ),
+        html.Div(
+            [
+                html.Span(tr(lang, "detail.avatar"), className="avatar student-detail-avatar", **{"aria-hidden": "true"}),
+                html.Div(
+                    [
+                        html.B(data["programa"]),
+                        html.Span(
+                            tr(lang, "detail.level_state", level=data["nivel"], state=state),
+                            className="student-detail-level",
+                        ),
+                        risk_badge(lang, data["riesgo"]),
+                    ],
+                    className="student-detail-identity-text",
+                ),
+            ],
+            className="student-detail-identity",
+        ),
+        html.Div(
+            [
+                detail_column(
+                    tr(lang, "detail.general"),
+                    [
+                        detail_item(tr(lang, "detail.program"), data["programa"]),
+                        detail_item(tr(lang, "detail.entry_period"), data["periodo_ingreso"]),
+                        detail_item(tr(lang, "detail.permanence"), data["estado_permanencia"]),
+                        detail_item(tr(lang, "detail.semesters"), data["semestres"]),
+                    ],
+                ),
+                detail_column(
+                    tr(lang, "detail.performance"),
+                    [
+                        detail_item(tr(lang, "detail.average"), data["promedio"]),
+                        detail_item(tr(lang, "detail.credits"), data["creditos"]),
+                        detail_item(tr(lang, "detail.progress"), data["avance"]),
+                        detail_item(tr(lang, "detail.last_period"), data["ultimo_periodo"]),
+                    ],
+                ),
+                detail_column(
+                    tr(lang, "detail.risk"),
+                    [
+                        detail_item(tr(lang, "detail.risk_level"), risk_label(lang, data["riesgo"]), data["riesgo"]),
+                        detail_item(tr(lang, "detail.main_signal"), data["senal"]),
+                        detail_item(tr(lang, "detail.attendance"), data["asistencia"]),
+                        detail_item(tr(lang, "detail.academic_state"), data["estado_academico"]),
+                    ],
+                ),
+            ],
+            className="student-detail-grid",
+        ),
+        html.Div(
+            [
+                html.H3(tr(lang, "detail.followup")),
+                html.P(tr(lang, "detail.followup_sub"), className="student-detail-sub"),
+                dcc.Dropdown(
+                    period_options(),
+                    max(history.periodo_academico),
+                    id="student-detail-period",
+                    clearable=False,
+                    className="filter",
+                ),
+                dcc.Textarea(id="student-detail-note", placeholder=tr(lang, "detail.note_ph"), className="textarea"),
+                dcc.Input(id="student-detail-action", placeholder=tr(lang, "detail.action_ph"), className="search-input"),
+                dcc.Input(
+                    id="student-detail-date",
+                    type="text",
+                    placeholder=tr(lang, "detail.date_ph"),
+                    className="search-input",
+                ),
+                html.Div(
+                    [
+                        html.Button(tr(lang, "detail.back"), id="close-student-detail", className="button", n_clicks=0, type="button"),
+                        html.Button(
+                            tr(lang, "action.save_followup"),
+                            id="save-student-followup",
+                            className="button primary",
+                            n_clicks=0,
+                            type="button",
+                        ),
+                    ],
+                    className="modal-actions",
+                ),
+                html.Div(id="student-detail-message", className="form-message"),
+            ],
+            className="student-detail-followup",
+        ),
+    ]
+
+
 def students_page(values, lang, dark, dismissed_demo=False):
     df = latest_view(values).copy()
     follows = read_followups()
@@ -844,6 +1021,13 @@ def students_page(values, lang, dark, dismissed_demo=False):
                     style_header=header,
                     style_cell=cell,
                     style_data_conditional=[
+                        {
+                            "if": {"column_id": "estudiante"},
+                            "color": "#153DDA",
+                            "textDecoration": "underline",
+                            "cursor": "pointer",
+                            "fontWeight": "500",
+                        },
                         {"if": {"filter_query": f"{{indicador}} = '{risk_label(lang, 'Alto')}'", "column_id": "indicador"}, "color": PALETTE["Alto"], "fontWeight": "600"},
                         {"if": {"filter_query": f"{{indicador}} = '{risk_label(lang, 'Medio')}'", "column_id": "indicador"}, "color": PALETTE["Medio"], "fontWeight": "600"},
                     ],
@@ -1577,6 +1761,18 @@ app.layout = html.Div(
         dcc.Store(id="selected-student"),
         dcc.Store(id="demo-dismissed", data=False, storage_type="session"),
         html.Div(id="root", children=login_page("es")),
+        html.Div(
+            html.Div(
+                student_detail_modal("es", EMPTY_DETAIL),
+                id="student-detail-body",
+                className="modal-card student-detail-card",
+                tabIndex="-1",
+            ),
+            id="student-detail-modal",
+            className="modal hidden",
+            role="dialog",
+            **{"aria-modal": "true", "aria-labelledby": "student-detail-title"},
+        ),
         dcc.Download(id="download"),
     ],
     id="app",
@@ -1820,6 +2016,59 @@ def search_students(term, values, prefs):
         )
         .to_dict("records")
     )
+
+
+@callback(
+    Output("student-detail-modal", "className"),
+    Output("student-detail-body", "children"),
+    Output("selected-student", "data"),
+    Output("students-table", "active_cell"),
+    Input("students-table", "active_cell"),
+    Input("close-student-detail", "n_clicks"),
+    State("students-table", "data"),
+    State("prefs", "data"),
+    prevent_initial_call=True,
+)
+def toggle_student_detail(active_cell, close_clicks, table_data, prefs):
+    if dash.ctx.triggered_id == "close-student-detail":
+        return "modal hidden", no_update, no_update, None
+    if not active_cell or active_cell.get("column_id") != "estudiante":
+        raise PreventUpdate
+    rows = table_data or []
+    index = active_cell.get("row")
+    if index is None or index < 0 or index >= len(rows):
+        raise PreventUpdate
+    student_id = rows[index].get("estudiante")
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    data = student_detail_data(student_id, lang)
+    if not data:
+        raise PreventUpdate
+    return "modal", student_detail_modal(lang, data), student_id, no_update
+
+
+@callback(
+    Output("student-detail-message", "children"),
+    Input("save-student-followup", "n_clicks"),
+    State("selected-student", "data"),
+    State("student-detail-period", "value"),
+    State("student-detail-note", "value"),
+    State("student-detail-action", "value"),
+    State("student-detail-date", "value"),
+    State("profile", "data"),
+    State("prefs", "data"),
+    prevent_initial_call=True,
+)
+def save_student_detail_followup(_, student_id, period, note, action, next_date, profile, prefs):
+    if not _:
+        raise PreventUpdate
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    if not all([student_id, period, note, action, next_date]):
+        return tr(lang, "followups.msg_missing")
+    if student_id not in set(students.estudiante_id):
+        return tr(lang, "followups.msg_invalid")
+    responsible = (profile or DEFAULT_PROFILE).get("name") or "Camila"
+    save_followup(student_id, period, responsible, note, action, next_date, "Nueva")
+    return tr(lang, "followups.msg_saved")
 
 
 def export_frame(df, fmt):

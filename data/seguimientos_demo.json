@@ -8,5 +8,15 @@
     "fecha_proxima_accion": "2026-11-19",
     "estado": "Nueva",
     "created_at": "2026-11-02T17:17:05"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "Requiere psiquatra",
+    "proxima_accion": "Mandarlo al psiquiatra",
+    "fecha_proxima_accion": "2026/11/05",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T14:47:10"
   }
 ]

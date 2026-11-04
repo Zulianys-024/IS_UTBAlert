@@ -115,3 +115,217 @@
     white-space: normal;
   }
 }
+
+/* ==========================================================================
+   Modal · Detalle del estudiante  (RF: directorio de estudiantes)
+   --------------------------------------------------------------------------
+   Sólo se añaden clases nuevas sobre el modal existente (.modal,
+   .modal-card, .modal-actions, .button, .badge, .textarea, .search-input).
+   La especificidad duplicada (.modal-card.student-detail-card) es necesaria
+   porque assets/style.css se carga después de este archivo.
+   ========================================================================== */
+
+.modal-card.student-detail-card {
+  width: 872px;
+  max-width: calc(100vw - 48px);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px 29px;
+  border-radius: 8px;
+  outline: none;
+}
+
+/* Encabezado */
+.student-detail-head {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 13px;
+}
+
+.student-detail-head h2 {
+  margin: 0 0 6px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--ink);
+}
+
+.student-detail-code {
+  font-size: 11px;
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+/* Identidad */
+.student-detail-identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-detail-identity .student-detail-avatar {
+  width: 46px;
+  height: 46px;
+  font-size: 13px;
+  flex: 0 0 46px;
+}
+
+.student-detail-identity-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.student-detail-identity-text b {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.student-detail-level {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.student-detail-identity-text .badge {
+  margin-top: 2px;
+}
+
+/* Tres columnas */
+.student-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 26px 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-detail-col {
+  padding: 0 22px;
+}
+
+.student-detail-col:first-child {
+  padding-left: 0;
+}
+
+.student-detail-col:last-child {
+  padding-right: 0;
+}
+
+.student-detail-col + .student-detail-col {
+  border-left: 1px solid var(--border);
+}
+
+.student-detail-col h3 {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.student-detail-col dl {
+  margin: 0;
+}
+
+.student-detail-col dl > div + div {
+  margin-top: 16px;
+}
+
+.student-detail-col dt {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.student-detail-col dd {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+/* Seguimiento */
+.student-detail-followup {
+  padding-top: 20px;
+}
+
+.student-detail-followup h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.student-detail-followup .student-detail-sub {
+  margin: 0 0 16px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.student-detail-followup .filter {
+  width: 100%;
+  margin: 0 0 12px;
+}
+
+.student-detail-followup .textarea {
+  margin: 0 0 12px;
+}
+
+.student-detail-followup .search-input {
+  margin: 0 0 12px;
+}
+
+/* --- Modo oscuro --------------------------------------------------------- */
+.theme-dark .student-detail-head,
+.theme-dark .student-detail-identity,
+.theme-dark .student-detail-grid {
+  border-color: #1E2A3F;
+}
+
+.theme-dark .student-detail-col + .student-detail-col {
+  border-color: #1E2A3F;
+}
+
+.theme-dark .student-detail-head h2,
+.theme-dark .student-detail-identity-text b,
+.theme-dark .student-detail-col h3,
+.theme-dark .student-detail-followup h3 {
+  color: #EAF0F9;
+}
+
+.theme-dark .student-detail-level,
+.theme-dark .student-detail-col dd {
+  color: #D6E0EF;
+}
+
+.theme-dark .student-detail-col dt,
+.theme-dark .student-detail-followup .student-detail-sub {
+  color: #8FA0B8;
+}
+
+.theme-dark .student-detail-code {
+  color: #7FA6FF;
+}
+
+/* --- Responsive ---------------------------------------------------------- */
+@media (max-width: 860px) {
+  .student-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .student-detail-col {
+    padding: 0;
+  }
+
+  .student-detail-col + .student-detail-col {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+
+  .theme-dark .student-detail-col + .student-detail-col {
+    border-color: #1E2A3F;
+  }
+}

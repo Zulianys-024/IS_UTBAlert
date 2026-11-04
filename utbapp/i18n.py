@@ -82,6 +82,31 @@ STRINGS: dict[str, dict[str, str]] = {
         "students.directory": "Directorio de estudiantes",
         "students.directory_sub": "Identificación por código académico · ordenado por riesgo y promedio acumulado",
         "students.search": "⌕  Buscar por estudiante_id",
+        # Detalle del estudiante (modal del directorio)
+        "detail.title": "Detalle del estudiante",
+        "detail.general": "Información general",
+        "detail.performance": "Desempeño académico",
+        "detail.risk": "Indicadores de riesgo",
+        "detail.program": "Programa académico",
+        "detail.entry_period": "Periodo de ingreso",
+        "detail.permanence": "Estado de permanencia",
+        "detail.semesters": "Semestres cursados",
+        "detail.average": "Promedio acumulado",
+        "detail.credits": "Créditos aprobados",
+        "detail.progress": "Avance del plan",
+        "detail.last_period": "Último periodo",
+        "detail.risk_level": "Nivel de riesgo",
+        "detail.main_signal": "Señal principal",
+        "detail.attendance": "Asistencia",
+        "detail.academic_state": "Estado académico",
+        "detail.followup": "Registrar seguimiento",
+        "detail.followup_sub": "Completa la nota y la próxima acción dentro del mismo detalle del estudiante.",
+        "detail.note_ph": "Nota de acompañamiento",
+        "detail.action_ph": "Próxima acción",
+        "detail.date_ph": "Fecha próxima acción · AAAA-MM-DD",
+        "detail.back": "Volver al detalle",
+        "detail.level_state": "Nivel {level} · {state}",
+        "detail.avatar": "ST",
         # Variables
         "variables.title": "Variables de riesgo",
         "variables.subtitle": "Consulta los indicadores y criterios que ayudan a identificar señales de atención.",
@@ -267,6 +292,31 @@ STRINGS: dict[str, dict[str, str]] = {
         "students.directory": "Student directory",
         "students.directory_sub": "Identified by academic code · sorted by risk and cumulative average",
         "students.search": "⌕  Search by estudiante_id",
+        # Student detail (directory modal)
+        "detail.title": "Student detail",
+        "detail.general": "General information",
+        "detail.performance": "Academic performance",
+        "detail.risk": "Risk indicators",
+        "detail.program": "Academic program",
+        "detail.entry_period": "Entry term",
+        "detail.permanence": "Permanence status",
+        "detail.semesters": "Semesters completed",
+        "detail.average": "Cumulative average",
+        "detail.credits": "Approved credits",
+        "detail.progress": "Plan progress",
+        "detail.last_period": "Last term",
+        "detail.risk_level": "Risk level",
+        "detail.main_signal": "Main signal",
+        "detail.attendance": "Attendance",
+        "detail.academic_state": "Academic status",
+        "detail.followup": "Register follow-up",
+        "detail.followup_sub": "Complete the note and the next action inside the student's own detail.",
+        "detail.note_ph": "Support note",
+        "detail.action_ph": "Next action",
+        "detail.date_ph": "Next action date · YYYY-MM-DD",
+        "detail.back": "Back to detail",
+        "detail.level_state": "Level {level} · {state}",
+        "detail.avatar": "ST",
         "variables.title": "Risk variables",
         "variables.subtitle": "Review the indicators and criteria that help identify signals for attention.",
         "variables.catalog": "Variable catalog",
@@ -384,6 +434,10 @@ FINAL_LABELS = {
     "es": {"ACTIVO": "Activos", "GRADUADO": "Graduados", "DESERTOR": "Desertores"},
     "en": {"ACTIVO": "Active", "GRADUADO": "Graduated", "DESERTOR": "Dropped out"},
 }
+PERMANENCE_LABELS = {
+    "es": {"ACTIVO": "Activo", "GRADUADO": "Graduado", "DESERTOR": "Desertor"},
+    "en": {"ACTIVO": "Active", "GRADUADO": "Graduated", "DESERTOR": "Dropped out"},
+}
 STATUS_LABELS = {
     "es": {
         "Nueva": "Nueva",
@@ -427,6 +481,11 @@ def risk_label(lang: str, value: str) -> str:
 
 def final_label(lang: str, value: str) -> str:
     return FINAL_LABELS.get(lang, FINAL_LABELS["es"]).get(value, value)
+
+
+def permanence_label(lang: str, value: str) -> str:
+    """Etiqueta singular del estado final (``Desertor`` en lugar de ``Desertores``)."""
+    return PERMANENCE_LABELS.get(lang, PERMANENCE_LABELS["es"]).get(value, value)
 
 
 def status_label(lang: str, value: str) -> str:
