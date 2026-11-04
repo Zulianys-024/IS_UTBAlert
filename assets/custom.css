@@ -308,6 +308,96 @@
   color: #7FA6FF;
 }
 
+/* --- Selector de fecha de la próxima acción ----------------------------- */
+.student-detail-date-input {
+  color-scheme: light;
+}
+
+.student-detail-date-input input::-webkit-calendar-picker-indicator {
+  opacity: .6;
+  cursor: pointer;
+}
+
+.student-detail-date-input input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.theme-dark .student-detail-date-input {
+  color-scheme: dark;
+}
+
+/* --- Notificación temporal (toast) -------------------------------------- */
+.toast {
+  position: fixed;
+  top: 92px;
+  right: 28px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 12px 16px;
+  border: 1px solid #CFE8DA;
+  border-radius: 8px;
+  background: #F0FBF6;
+  color: #0B6B4B;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 14px 30px rgba(15, 32, 64, .16);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.toast-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 150, 100, .14);
+  color: #009664;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.toast.toast-error {
+  background: #FFF1F1;
+  border-color: #F3C2C6;
+  color: #B03A42;
+}
+
+.toast.toast-error .toast-icon {
+  background: rgba(216, 73, 81, .14);
+  color: #D84951;
+}
+
+.toast-token {
+  display: none;
+}
+
+.theme-dark .toast {
+  background: #10312A;
+  border-color: #1E5B47;
+  color: #7CE3BE;
+}
+
+.theme-dark .toast.toast-error {
+  background: #3A1D22;
+  border-color: #5A2A30;
+  color: #FFB3B8;
+}
+
 /* --- Responsive ---------------------------------------------------------- */
 @media (max-width: 860px) {
   .student-detail-grid {

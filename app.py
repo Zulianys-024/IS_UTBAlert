@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import calendar
 import io
 import json
+import time
+from datetime import date
 from urllib.parse import quote
 
 import dash
@@ -65,6 +68,7 @@ NAV = [
 ]
 DEFAULT_PREFS = {"lang": "es", "theme": "light"}
 DEFAULT_PROFILE = {"name": "Camila", "email": "camila@utb.edu.co", "role": "admin", "description": ""}
+FOLLOWUP_MAX_MONTHS = 6
 DEMO_SESSION = {"user": "Camila", "role": "admin"}
 
 ICON_PATHS = {
@@ -877,6 +881,32 @@ EMPTY_DETAIL = {
 }
 
 
+def add_months(value: date, months: int) -> date:
+    """Suma meses de calendario y conserva el día cuando existe."""
+    month_index = value.month - 1 + months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(value.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def followup_date_bounds() -> tuple[str, str]:
+    """Rango permitido para la fecha de la próxima acción: hoy a +6 meses."""
+    today = date.today()
+    return today.isoformat(), add_months(today, FOLLOWUP_MAX_MONTHS).isoformat()
+
+
+def toast(kind: str, message: str):
+    """Salidas (clase, contenido) de la notificación temporal no bloqueante."""
+    icon = "✓" if kind == "success" else "!"
+    content = [
+        html.Span(icon, className="toast-icon"),
+        html.Span(message, className="toast-text"),
+        html.Span(str(time.time_ns()), className="toast-token"),
+    ]
+    return f"toast toast-{kind}", content
+
+
 def detail_item(label, value, tone=None):
     style = {"color": PALETTE[tone], "fontWeight": "600"} if tone in PALETTE else None
     return html.Div([html.Dt(label), html.Dd(value, style=style)])
@@ -888,6 +918,7 @@ def detail_column(title, items):
 
 def student_detail_modal(lang, data):
     state = permanence_label(lang, data["estado_final"]) if data["estado_final"] else "—"
+    min_date, max_date = followup_date_bounds()
     return [
         html.Div(
             [
@@ -960,9 +991,11 @@ def student_detail_modal(lang, data):
                 dcc.Input(id="student-detail-action", placeholder=tr(lang, "detail.action_ph"), className="search-input"),
                 dcc.Input(
                     id="student-detail-date",
-                    type="text",
+                    type="date",
+                    min=min_date,
+                    max=max_date,
                     placeholder=tr(lang, "detail.date_ph"),
-                    className="search-input",
+                    className="search-input student-detail-date-input",
                 ),
                 html.Div(
                     [
@@ -1808,6 +1841,12 @@ app.layout = html.Div(
             role="dialog",
             **{"aria-modal": "true", "aria-labelledby": "student-detail-title"},
         ),
+        html.Div(
+            id="toast",
+            className="toast",
+            role="status",
+            **{"aria-live": "polite"},
+        ),
         dcc.Download(id="download"),
     ],
     id="app",
@@ -2065,33 +2104,13 @@ def search_students(term, values, prefs):
     Output("student-detail-body", "children"),
     Output("selected-student", "data"),
     Output("students-table", "active_cell"),
+    Output("toast", "className"),
+    Output("toast", "children"),
     Input("students-table", "active_cell"),
     Input("close-student-detail", "n_clicks"),
-    State("students-table", "data"),
-    State("prefs", "data"),
-    prevent_initial_call=True,
-)
-def toggle_student_detail(active_cell, close_clicks, table_data, prefs):
-    if dash.ctx.triggered_id == "close-student-detail":
-        return "modal hidden", no_update, no_update, None
-    if not active_cell or active_cell.get("column_id") != "estudiante":
-        raise PreventUpdate
-    rows = table_data or []
-    index = active_cell.get("row")
-    if index is None or index < 0 or index >= len(rows):
-        raise PreventUpdate
-    student_id = rows[index].get("estudiante")
-    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
-    data = student_detail_data(student_id, lang)
-    if not data:
-        raise PreventUpdate
-    return "modal", student_detail_modal(lang, data), student_id, no_update
-
-
-@callback(
-    Output("student-detail-message", "children"),
     Input("save-student-followup", "n_clicks"),
     State("selected-student", "data"),
+    State("students-table", "data"),
     State("student-detail-period", "value"),
     State("student-detail-note", "value"),
     State("student-detail-action", "value"),
@@ -2100,17 +2119,67 @@ def toggle_student_detail(active_cell, close_clicks, table_data, prefs):
     State("prefs", "data"),
     prevent_initial_call=True,
 )
-def save_student_detail_followup(_, student_id, period, note, action, next_date, profile, prefs):
-    if not _:
-        raise PreventUpdate
+def toggle_student_detail(
+    active_cell,
+    close_clicks,
+    save_clicks,
+    student_id,
+    table_data,
+    period,
+    note,
+    action,
+    next_date,
+    profile,
+    prefs,
+):
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
-    if not all([student_id, period, note, action, next_date]):
-        return tr(lang, "followups.msg_missing")
-    if student_id not in set(students.estudiante_id):
-        return tr(lang, "followups.msg_invalid")
-    responsible = (profile or DEFAULT_PROFILE).get("name") or "Camila"
-    save_followup(student_id, period, responsible, note, action, next_date, "Nueva")
-    return tr(lang, "followups.msg_saved")
+    trigger = dash.ctx.triggered_id
+    empty_body = student_detail_modal(lang, EMPTY_DETAIL)
+
+    # Cancelar o Escape: cierra y deja el formulario limpio.
+    if trigger == "close-student-detail":
+        return "modal hidden", empty_body, no_update, None, no_update, no_update
+
+    # Guardar seguimiento: sólo cierra si el guardado es correcto.
+    if trigger == "save-student-followup":
+        if not save_clicks:
+            raise PreventUpdate
+        if not student_id or not all([period, note, action, next_date]):
+            return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_missing")))
+        if student_id not in set(students.estudiante_id):
+            return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_invalid")))
+        try:
+            next_date_value = date.fromisoformat(str(next_date)[:10])
+        except (TypeError, ValueError):
+            next_date_value = None
+        today = date.today()
+        if next_date_value is None or next_date_value < today or next_date_value > add_months(today, FOLLOWUP_MAX_MONTHS):
+            return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "detail.msg_date_range")))
+        responsible = (profile or DEFAULT_PROFILE).get("name") or "Camila"
+        try:
+            save_followup(student_id, period, responsible, note, action, next_date, "Nueva")
+        except Exception:
+            return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_error")))
+        # Éxito: cierra, limpia el formulario y avisa con un toast temporal.
+        return (
+            "modal hidden",
+            empty_body,
+            no_update,
+            None,
+            *toast("success", tr(lang, "followups.msg_saved")),
+        )
+
+    if not active_cell or active_cell.get("column_id") != "estudiante":
+        raise PreventUpdate
+    rows = table_data or []
+    index = active_cell.get("row")
+    if index is None or index < 0 or index >= len(rows):
+        raise PreventUpdate
+    student_id = rows[index].get("estudiante")
+    data = student_detail_data(student_id, lang)
+    if not data:
+        raise PreventUpdate
+    return "modal", student_detail_modal(lang, data), student_id, no_update, no_update, no_update
 
 
 def export_frame(df, fmt):

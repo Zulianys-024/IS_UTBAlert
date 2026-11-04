@@ -17,6 +17,7 @@
   var MODAL_ID = "student-detail-modal";
   var CARD_ID = "student-detail-body";
   var CLOSE_ID = "close-student-detail";
+  var DATE_ID = "student-detail-date";
   var CODE_SELECTOR = '#students-table td[data-dash-column="estudiante"]';
   var FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]),' +
@@ -39,6 +40,32 @@
     if (button) {
       button.click();
     }
+  }
+
+  /* --- Rango dinámico del selector de fecha ----------------------------- */
+  function isoDate(value) {
+    var year = value.getFullYear();
+    var month = String(value.getMonth() + 1).padStart(2, "0");
+    var day = String(value.getDate()).padStart(2, "0");
+    return year + "-" + month + "-" + day;
+  }
+
+  function addMonths(value, months) {
+    var target = new Date(value.getFullYear(), value.getMonth() + months, 1);
+    var lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(value.getDate(), lastDay));
+    return target;
+  }
+
+  function refreshDateBounds() {
+    var input = document.getElementById(DATE_ID);
+    if (!input) {
+      return;
+    }
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    input.min = isoDate(today);
+    input.max = isoDate(addMonths(today, 6));
   }
 
   /* --- 1. Código del estudiante enfocable ------------------------------- */
@@ -115,6 +142,7 @@
   function refresh() {
     enhanceCodes();
     syncModal();
+    refreshDateBounds();
   }
 
   /* --- 4. Eventos ------------------------------------------------------- */
@@ -134,6 +162,10 @@
         return;
       }
       if (event.key === "Escape") {
+        // Deja que el calendario nativo se cierre por su cuenta.
+        if (event.target && event.target.id === DATE_ID) {
+          return;
+        }
         event.preventDefault();
         requestClose();
         return;
@@ -145,12 +177,18 @@
     true
   );
 
-  document.addEventListener("click", function (event) {
-    var el = modal();
-    if (el && isOpen() && event.target === el) {
-      requestClose();
+  // Recalcula el rango de fechas cada vez que el usuario abre el calendario,
+  // aunque la página lleve abierta más de un día.
+  function onDateIntent(event) {
+    if (event.target && event.target.id === DATE_ID) {
+      refreshDateBounds();
     }
-  });
+  }
+  document.addEventListener("focusin", onDateIntent, true);
+  document.addEventListener("click", onDateIntent, true);
+
+  // El modal sólo se cierra con "Cancelar", con Escape (ruta de cancelación)
+  // o con un guardado correcto. El clic en el overlay ya no lo cierra.
 
   new MutationObserver(refresh).observe(document.body, {
     childList: true,

@@ -72,7 +72,10 @@
 .user-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:272px;background:#fff;border:1px solid #E6EBF2;border-radius:10px;box-shadow:0 18px 40px rgba(15,32,64,.14);padding:8px;z-index:70;display:none}
 .user-dropdown.open{display:block;animation:menu-in .12s ease-out}
 @keyframes menu-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-.menu-backdrop{position:fixed;inset:0;z-index:60;display:none}
+/* El backdrop debe quedar bajo la topbar (z-index 40): la topbar crea su propio
+contexto de apilado y el dropdown hereda ese nivel, así sus items siguen
+siendo clickeables cuando el menú está abierto. */
+.menu-backdrop{position:fixed;inset:0;z-index:35;display:none}
 .menu-backdrop.open{display:block}
 .menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:7px;background:transparent;color:#2A3446;font-family:inherit;font-size:12.5px;font-weight:500;text-align:left;text-decoration:none;cursor:pointer}
 .menu-item:hover{background:#F4F7FC}

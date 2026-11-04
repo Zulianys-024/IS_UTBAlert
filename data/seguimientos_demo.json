@@ -18,5 +18,15 @@
     "fecha_proxima_accion": "2026/11/05",
     "estado": "Nueva",
     "created_at": "2026-11-04T14:47:10"
+  },
+  {
+    "estudiante_id": "T00012037",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "pillaron al alumno metiendo machete en un parcial.",
+    "proxima_accion": "acompañamiento en dicha materia",
+    "fecha_proxima_accion": "2026-11-06",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T18:37:15"
   }
 ]
