@@ -1052,7 +1052,6 @@ def students_page(values, lang, dark, dismissed_demo=False):
                         {"name": tr(lang, "col.period"), "id": "periodo"},
                     ],
                     page_size=10,
-                    row_selectable="single",
                     style_as_list_view=True,
                     style_header=header,
                     style_cell=cell,
