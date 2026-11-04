@@ -7,6 +7,7 @@ Sistema web analítico desarrollado para la **Universidad Tecnológica de Bolív
 ## Equipo de Trabajo
 
 * **Brayan Maluenga**
+* **Brayan Maluenga**
 * **Zulianys Orozco**
 * **Juan Hernandez**
 

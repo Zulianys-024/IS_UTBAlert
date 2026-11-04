@@ -235,3 +235,7 @@
 .theme-dark .tabs .tab.active{color:#7FA6FF}
 .theme-dark .form-message{color:#4AD2A6}
 @media(max-width:900px){.profile-card-row{flex-wrap:wrap}.profile-edit-body{flex-direction:column;gap:20px}.profile-edit-aside{width:100%;border-right:0;border-bottom:1px solid var(--border);padding-bottom:24px}.profile-edit-actions{flex-wrap:wrap}}
+
+/* Tablas anchas: que hagan scroll dentro de la tarjeta en vez de desbordar la pagina */
+.table-card{min-width:0}
+.dash-table-container{overflow-x:auto}
