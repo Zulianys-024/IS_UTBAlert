@@ -18,5 +18,305 @@
     "fecha_proxima_accion": "2026/11/05",
     "estado": "Nueva",
     "created_at": "2026-11-04T14:47:10"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "Se portó mal",
+    "proxima_accion": "matarlo",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T15:45:29"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "Se portó mal",
+    "proxima_accion": "matarlo",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T15:45:40"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "nose",
+    "proxima_accion": "p",
+    "fecha_proxima_accion": "skibidi",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:01:14"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:01"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:06"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:06"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:06"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:07"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:07"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:07"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:07"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:07"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:08"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:08"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:08"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:08"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:08"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:09"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:09"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:09"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:09"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:09"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:10"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:10"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:10"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:10"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:10"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "vende brownies en la universidad",
+    "proxima_accion": "meterlo preso",
+    "fecha_proxima_accion": "mañana",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T16:09:12"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "k",
+    "proxima_accion": "k",
+    "fecha_proxima_accion": "k",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T17:32:05"
+  },
+  {
+    "estudiante_id": "T00011387",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "k",
+    "proxima_accion": "k",
+    "fecha_proxima_accion": "k",
+    "estado": "Nueva",
+    "created_at": "2026-11-04T17:33:00"
   }
 ]
