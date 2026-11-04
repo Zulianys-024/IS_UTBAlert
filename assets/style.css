@@ -225,9 +225,7 @@
 .theme-dark .breadcrumb-link{color:#8FA0B8}
 .theme-dark .modal{background:#05090F99}
 .theme-dark .modal-card{border:1px solid #1E2A3F}
-.theme-dark .login-label{color:#A9B7CC}
-.theme-dark .login-input{background:#0F1A2B;border-color:#243450;color:#DCE6F5}
-.theme-dark .login-input::placeholder{color:#6F8098}
+/* login unaffected by dark mode */
 .theme-dark .dash-table-container .previous-next-container button{background:#16233A;border:1px solid #243450;color:#DCE6F5}
 .theme-dark .dash-table-container .previous-next-container button:hover:not([disabled]){background:#1E2E4A}
 .theme-dark .dash-table-container .previous-next-container .page-number{background:#111C2E;border-color:#243450;color:#C6D3E4}

@@ -43,7 +43,6 @@ def manus_routes():
                 "routes": [
                     {"path": "/", "title": "Inicio"},
                     {"path": "/estudiantes", "title": "Estudiantes"},
-                    {"path": "/variables", "title": "Variables de riesgo"},
                     {"path": "/alertas", "title": "Alertas"},
                     {"path": "/seguimientos", "title": "Seguimientos"},
                     {"path": "/reportes", "title": "Reportes"},
@@ -59,7 +58,6 @@ PALETTE = {"Alto": "#E3545B", "Medio": "#E8B000", "Bajo": "#009664"}
 NAV = [
     ("nav.home", "/", "⌂"),
     ("nav.students", "/estudiantes", "♧"),
-    ("nav.variables", "/variables", "☷"),
     ("nav.alerts", "/alertas", "♧"),
     ("nav.followups", "/seguimientos", "▣"),
     ("nav.reports", "/reportes", "▥"),
@@ -129,14 +127,30 @@ def status_badge(lang, value):
     )
 
 
-def demo_banner(lang):
+def demo_banner(lang, dismissed=False):
+    if dismissed:
+        return html.Div(id="demo-banner-container", style={"display": "none"})
     return html.Div(
         [
             html.Span("ⓘ", className="info-symbol"),
             html.B(tr(lang, "demo.title")),
             tr(lang, "demo.text"),
-            html.Span(tr(lang, "demo.action"), className="banner-action"),
+            html.Button(
+                tr(lang, "demo.action"),
+                id="dismiss-demo-btn",
+                className="banner-action",
+                style={
+                    "border": "none",
+                    "background": "none",
+                    "cursor": "pointer",
+                    "fontFamily": "inherit",
+                    "color": "inherit",
+                    "padding": "0",
+                },
+                n_clicks=0,
+            ),
         ],
+        id="demo-banner-container",
         className="demo-banner",
     )
 
@@ -576,7 +590,7 @@ def trend_figure(lang, dark):
 # === PAGES ===
 
 
-def home_page(values, lang, dark, profile):
+def home_page(values, lang, dark, profile, dismissed_demo=False):
     df = latest_view(values)
     total = len(df) or 1
     counts = df.riesgo.value_counts()
@@ -612,7 +626,7 @@ def home_page(values, lang, dark, profile):
             action_button(tr(lang, "export.summary"), "export-btn"),
         ),
         critical_alert_banner(counts.get("Alto", 0), lang),
-        demo_banner(lang),
+        demo_banner(lang, dismissed_demo),
         filter_bar(values, lang),
         html.Div(
             [
@@ -748,18 +762,11 @@ def home_page(values, lang, dark, profile):
             ],
             className="card table-card",
         ),
-        html.Div(
-            [
-                icon_box("▧", "blue"),
-                html.Div([html.B(tr(lang, "home.report")), html.P(tr(lang, "home.report_sub"))]),
-                html.Span("→", className="arrow"),
-            ],
-            className="report-cta",
-        ),
+        variables_catalog_card(lang, dark),
     ]
 
 
-def students_page(values, lang, dark):
+def students_page(values, lang, dark, dismissed_demo=False):
     df = latest_view(values).copy()
     follows = read_followups()
     df["periodo"] = df.periodo_academico.map(period_label)
@@ -786,7 +793,7 @@ def students_page(values, lang, dark):
             tr(lang, "students.subtitle"),
             action_button(tr(lang, "export.directory"), "export-btn"),
         ),
-        demo_banner(lang),
+        demo_banner(lang, dismissed_demo),
         filter_bar(values, lang),
         html.Div(
             [
@@ -845,6 +852,47 @@ def students_page(values, lang, dark):
             className="card table-card",
         ),
     ]
+
+
+def variables_catalog_card(lang, dark):
+    idx = 0 if lang == "es" else 1
+    rows = [
+        {
+            "variable": item["name"][idx],
+            "categoria": item["cat"][idx],
+            "criterio": item["criteria"][idx],
+            "indicador": risk_label(lang, item["level"]),
+            "estado": item["state"][idx],
+        }
+        for item in VARIABLES
+    ]
+    header, cell = table_styles(dark)
+    return html.Div(
+        [
+            html.Div(
+                [html.H2(tr(lang, "variables.catalog")), html.P(tr(lang, "variables.catalog_sub"))],
+                className="card-head",
+            ),
+            dash_table.DataTable(
+                data=rows,
+                columns=[
+                    {"name": tr(lang, "col.variable"), "id": "variable"},
+                    {"name": tr(lang, "col.category"), "id": "categoria"},
+                    {"name": tr(lang, "col.criteria"), "id": "criterio"},
+                    {"name": tr(lang, "col.indicator"), "id": "indicador"},
+                    {"name": tr(lang, "col.state"), "id": "estado"},
+                ],
+                style_as_list_view=True,
+                style_header=header,
+                style_cell=cell,
+                style_data_conditional=[
+                    {"if": {"filter_query": f"{{indicador}} = '{risk_label(lang, 'Alto')}'", "column_id": "indicador"}, "color": PALETTE["Alto"], "fontWeight": "600"},
+                    {"if": {"filter_query": f"{{indicador}} = '{risk_label(lang, 'Medio')}'", "column_id": "indicador"}, "color": PALETTE["Medio"], "fontWeight": "600"},
+                ],
+            ),
+        ],
+        className="card table-card",
+    )
 
 
 VARIABLES = [
@@ -928,7 +976,7 @@ def alerts_summary_title(lang, count):
     return tr(lang, "alerts.new_count", count=fmt_int(count, lang))
 
 
-def alerts_page(values, lang, dark):
+def alerts_page(values, lang, dark, dismissed_demo=False):
     df = latest_view(values).copy()
     follows = read_followups()
     df["periodo"] = df.periodo_academico.map(period_label)
@@ -953,7 +1001,7 @@ def alerts_page(values, lang, dark):
             tr(lang, "alerts.subtitle"),
             action_button(tr(lang, "export.alerts"), "export-btn"),
         ),
-        demo_banner(lang),
+        demo_banner(lang, dismissed_demo),
         html.Div(
             [
                 icon_box("♧", "blue"),
@@ -1006,7 +1054,7 @@ def alerts_page(values, lang, dark):
 # === PAGES 2 ===
 
 
-def followups_page(lang, dark, profile):
+def followups_page(lang, dark, profile, dismissed_demo=False):
     records = read_followups()
     followup_form = html.Div(
         [
@@ -1042,7 +1090,7 @@ def followups_page(lang, dark, profile):
                 tr(lang, "followups.subtitle"),
                 action_button(tr(lang, "action.register_followup"), "open-followup"),
             ),
-            demo_banner(lang),
+            demo_banner(lang, dismissed_demo),
             html.Div(
                 [
                     html.Div("▣", className="empty-icon"),
@@ -1070,7 +1118,7 @@ def followups_page(lang, dark, profile):
             tr(lang, "followups.subtitle_full"),
             action_button(tr(lang, "action.register_followup"), "open-followup"),
         ),
-        demo_banner(lang),
+        demo_banner(lang, dismissed_demo),
         html.Div(
             [
                 html.Div(
@@ -1095,7 +1143,7 @@ def followups_page(lang, dark, profile):
     ]
 
 
-def reports_page(values, lang, dark):
+def reports_page(values, lang, dark, dismissed_demo=False):
     theme = chart_palette(dark)
     df = latest_view(values).copy()
     status = df.estado_final.value_counts().reindex(["ACTIVO", "GRADUADO", "DESERTOR"], fill_value=0).reset_index()
@@ -1142,7 +1190,7 @@ def reports_page(values, lang, dark):
             tr(lang, "reports.subtitle"),
             action_button(tr(lang, "export.summary"), "export-btn"),
         ),
-        demo_banner(lang),
+        demo_banner(lang, dismissed_demo),
         html.Div(
             [
                 html.H2(tr(lang, "reports.prepare")),
@@ -1527,6 +1575,7 @@ app.layout = html.Div(
         dcc.Store(id="filters", data={}),
         dcc.Store(id="report-format-store", data="csv"),
         dcc.Store(id="selected-student"),
+        dcc.Store(id="demo-dismissed", data=False, storage_type="session"),
         html.Div(id="root", children=login_page("es")),
         dcc.Download(id="download"),
     ],
@@ -1535,8 +1584,14 @@ app.layout = html.Div(
 )
 
 
-@callback(Output("app", "className"), Input("prefs", "data"))
-def apply_theme(prefs):
+@callback(
+    Output("app", "className"),
+    Input("prefs", "data"),
+    Input("auth", "data"),
+)
+def apply_theme(prefs, auth):
+    if not auth:
+        return "app theme-light"
     theme = (prefs or DEFAULT_PREFS).get("theme", "light")
     return f"app theme-{theme}"
 
@@ -1548,8 +1603,9 @@ def apply_theme(prefs):
     Input("filters", "data"),
     Input("prefs", "data"),
     Input("profile", "data"),
+    Input("demo-dismissed", "data"),
 )
-def render(path, auth, values, prefs, profile):
+def render(path, auth, values, prefs, profile, demo_dismissed):
     prefs = {**DEFAULT_PREFS, **(prefs or {})}
     lang = prefs["lang"]
     dark = prefs["theme"] == "dark"
@@ -1557,22 +1613,21 @@ def render(path, auth, values, prefs, profile):
     if not auth:
         return login_page(lang)
     path = path or "/"
+    dismissed_demo = bool(demo_dismissed)
     if path == "/estudiantes":
-        content = students_page(values, lang, dark)
-    elif path == "/variables":
-        content = variables_page(lang, dark)
+        content = students_page(values, lang, dark, dismissed_demo)
     elif path == "/alertas":
-        content = alerts_page(values, lang, dark)
+        content = alerts_page(values, lang, dark, dismissed_demo)
     elif path == "/seguimientos":
-        content = followups_page(lang, dark, profile)
+        content = followups_page(lang, dark, profile, dismissed_demo)
     elif path == "/reportes":
-        content = reports_page(values, lang, dark)
+        content = reports_page(values, lang, dark, dismissed_demo)
     elif path == "/perfil":
         content = profile_page(lang, dark, profile)
     elif path == "/perfil/editar":
         content = profile_edit_page(lang, dark, profile)
     else:
-        content = home_page(values, lang, dark, profile)
+        content = home_page(values, lang, dark, profile, dismissed_demo)
     return shell(path, content, lang, dark, profile)
 
 
@@ -1857,3 +1912,14 @@ def on_critical_alert_click(clicks, current_filters):
     updated = {**(current_filters or {})}
     updated["riesgo"] = "Alto"
     return "/estudiantes", updated
+
+
+@callback(
+    Output("demo-dismissed", "data"),
+    Input("dismiss-demo-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def dismiss_demo_banner(clicks):
+    if not clicks:
+        raise PreventUpdate
+    return True
