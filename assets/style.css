@@ -239,3 +239,12 @@
 /* Tablas anchas: que hagan scroll dentro de la tarjeta en vez de desbordar la pagina */
 .table-card{min-width:0}
 .dash-table-container{overflow-x:auto}
+/* Fila de filtros con el KPI de riesgo alto al lado (pagina Estudiantes) */
+.filter-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.filter-row .filter-bar{flex:1 1 auto;min-width:0;margin:0}
+.filter-anchors{display:none}
+.compact-kpi{display:flex;flex:0 0 auto;min-height:0;flex-direction:row;align-items:center;justify-content:center;gap:11px;padding:9px 15px}
+.compact-kpi .kpi-value{font-size:21px;margin:0;line-height:1.05;letter-spacing:-.5px}
+.compact-kpi .kpi-label{margin:0;font-size:11px}
+.compact-kpi-copy{display:flex;flex-direction:column;gap:1px}
+@media(max-width:900px){.filter-row{flex-direction:column;align-items:stretch}.compact-kpi{min-width:0}}

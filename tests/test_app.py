@@ -25,6 +25,17 @@ def test_pages_render_in_english_and_dark_theme():
         assert page is not None
 
 
+def test_students_directory_only_shows_high_risk():
+    dashboard.app._setup_server()
+
+    full = dashboard.latest_view({})
+    directory = dashboard.latest_view(dashboard.students_filters({}))
+
+    assert not directory.empty
+    assert set(directory["riesgo"].unique()) == {"Alto"}
+    assert len(directory) < len(full)
+
+
 @pytest.mark.parametrize("report_format", ["csv", "xlsx"])
 def test_report_export_uses_filter_state(report_format):
     dashboard.app._setup_server()

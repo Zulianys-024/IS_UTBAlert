@@ -340,16 +340,15 @@ def shell(path, content, lang, dark, profile):
 
 
 def page_heading(lang, title, subtitle, action=None):
+    copy = [
+        html.Div(tr(lang, "eyebrow"), className="eyebrow"),
+        html.H1(title),
+    ]
+    if subtitle:
+        copy.append(html.P(subtitle))
     return html.Div(
         [
-            html.Div(
-                [
-                    html.Div(tr(lang, "eyebrow"), className="eyebrow"),
-                    html.H1(title),
-                    html.P(subtitle),
-                ],
-                className="heading-copy",
-            ),
+            html.Div(copy, className="heading-copy"),
             action,
         ],
         className="page-heading",
@@ -363,7 +362,7 @@ def action_button(label, id=None, primary=False):
     return html.Button(label, id=id, className=class_name, n_clicks=0)
 
 
-def filter_bar(values, lang):
+def filter_bar(values, lang, compact=False):
     values = values or {}
 
     def opts(items, all_key, labeler=None):
@@ -372,53 +371,90 @@ def filter_bar(values, lang):
             {"label": lab(x), "value": str(x)} for x in items
         ]
 
-    return html.Div(
-        [
+    fields = [
+        dcc.Dropdown(
+            opts(options_from("programa"), "all.programs"),
+            values.get("programa", "Todos"),
+            id="global-programa",
+            clearable=False,
+            className="filter",
+        ),
+        dcc.Dropdown(
+            period_options() + [{"label": tr(lang, "all.periods"), "value": "Todos"}],
+            values.get("periodo", "Todos"),
+            id="global-periodo",
+            clearable=False,
+            className="filter",
+        ),
+        dcc.Dropdown(
+            opts(sorted(history.nivel_actual.unique()), "all.levels"),
+            values.get("nivel", "Todos"),
+            id="global-nivel",
+            clearable=False,
+            className="filter",
+        ),
+    ]
+
+    if compact:
+        # Vista de directorio: el riesgo alto es el único indicador visible.
+        fields.append(
             dcc.Dropdown(
-                opts(options_from("programa"), "all.programs"),
-                values.get("programa", "Todos"),
-                id="global-programa",
-                clearable=False,
-                className="filter",
-            ),
-            dcc.Dropdown(
-                period_options() + [{"label": tr(lang, "all.periods"), "value": "Todos"}],
-                values.get("periodo", "Todos"),
-                id="global-periodo",
-                clearable=False,
-                className="filter",
-            ),
-            dcc.Dropdown(
-                opts(sorted(history.nivel_actual.unique()), "all.levels"),
-                values.get("nivel", "Todos"),
-                id="global-nivel",
-                clearable=False,
-                className="filter",
-            ),
-            dcc.Dropdown(
-                opts(sorted(history.estado_academico.unique()), "all.states"),
-                values.get("academico", "Todos"),
-                id="global-academico",
-                clearable=False,
-                className="filter",
-            ),
-            dcc.Dropdown(
-                opts(["Alto", "Medio", "Bajo"], "all.risks", lambda x: risk_label(lang, x)),
-                values.get("riesgo", "Todos"),
+                [{"label": risk_label(lang, "Alto"), "value": "Alto"}],
+                "Alto",
                 id="global-riesgo",
                 clearable=False,
                 className="filter",
-            ),
-            dcc.Dropdown(
-                opts(sorted(students.estado_final.unique()), "all.final", lambda x: final_label(lang, x)),
-                values.get("final", "Todos"),
-                id="global-final",
-                clearable=False,
-                className="filter",
-            ),
-        ],
-        className="filter-bar",
-    )
+            )
+        )
+        # Anclas ocultas: los filtros retirados siguen existiendo para que el
+        # callback update_filters no pierda sus Inputs.
+        fields.append(
+            html.Div(
+                [
+                    dcc.Dropdown(
+                        opts(sorted(history.estado_academico.unique()), "all.states"),
+                        "Todos",
+                        id="global-academico",
+                        clearable=False,
+                    ),
+                    dcc.Dropdown(
+                        opts(sorted(students.estado_final.unique()), "all.final", lambda x: final_label(lang, x)),
+                        "Todos",
+                        id="global-final",
+                        clearable=False,
+                    ),
+                ],
+                className="filter-anchors",
+            )
+        )
+    else:
+        fields.extend(
+            [
+                dcc.Dropdown(
+                    opts(sorted(history.estado_academico.unique()), "all.states"),
+                    values.get("academico", "Todos"),
+                    id="global-academico",
+                    clearable=False,
+                    className="filter",
+                ),
+                dcc.Dropdown(
+                    opts(["Alto", "Medio", "Bajo"], "all.risks", lambda x: risk_label(lang, x)),
+                    values.get("riesgo", "Todos"),
+                    id="global-riesgo",
+                    clearable=False,
+                    className="filter",
+                ),
+                dcc.Dropdown(
+                    opts(sorted(students.estado_final.unique()), "all.final", lambda x: final_label(lang, x)),
+                    values.get("final", "Todos"),
+                    id="global-final",
+                    clearable=False,
+                    className="filter",
+                ),
+            ]
+        )
+
+    return html.Div(fields, className="filter-bar")
 
 
 def options_from(column):
@@ -466,6 +502,11 @@ def apply_filters(values):
 
 def latest_view(values=None):
     return apply_filters(values or {})
+
+
+def students_filters(values=None):
+    """El directorio muestra siempre riesgo alto y no usa los filtros retirados."""
+    return {**(values or {}), "riesgo": "Alto", "academico": "Todos", "final": "Todos"}
 
 
 def table_styles(dark):
@@ -760,6 +801,7 @@ def home_page(values, lang, dark, profile):
 
 
 def students_page(values, lang, dark):
+    values = students_filters(values)
     df = latest_view(values).copy()
     follows = read_followups()
     df["periodo"] = df.periodo_academico.map(period_label)
@@ -783,34 +825,28 @@ def students_page(values, lang, dark):
         page_heading(
             lang,
             tr(lang, "students.title"),
-            tr(lang, "students.subtitle"),
+            None,
             action_button(tr(lang, "export.directory"), "export-btn"),
         ),
         demo_banner(lang),
-        filter_bar(values, lang),
         html.Div(
             [
-                kpi(tr(lang, "students.analyzed"), fmt_int(len(df), lang), tr(lang, "students.by_filters"), "blue"),
-                kpi(
-                    tr(lang, "indicator.high"),
-                    fmt_int((df.riesgo == "Alto").sum(), lang),
-                    tr(lang, "pct.of_total", pct=fmt_pct((df.riesgo == "Alto").mean() * 100 if len(df) else 0, lang)),
-                    "red",
-                ),
-                kpi(
-                    tr(lang, "indicator.medium"),
-                    fmt_int((df.riesgo == "Medio").sum(), lang),
-                    tr(lang, "pct.of_total", pct=fmt_pct((df.riesgo == "Medio").mean() * 100 if len(df) else 0, lang)),
-                    "amber",
-                ),
-                kpi(
-                    tr(lang, "indicator.low"),
-                    fmt_int((df.riesgo == "Bajo").sum(), lang),
-                    tr(lang, "pct.of_total", pct=fmt_pct((df.riesgo == "Bajo").mean() * 100 if len(df) else 0, lang)),
-                    "green",
+                filter_bar(values, lang, compact=True),
+                html.Div(
+                    [
+                        icon_box("△", "red"),
+                        html.Div(
+                            [
+                                html.Div(fmt_int(len(df), lang), className="kpi-value"),
+                                html.Div(tr(lang, "indicator.high"), className="kpi-label"),
+                            ],
+                            className="compact-kpi-copy",
+                        ),
+                    ],
+                    className="kpi-card compact-kpi",
                 ),
             ],
-            className="kpi-grid four",
+            className="filter-row",
         ),
         html.Div(
             [
@@ -1724,11 +1760,18 @@ def save_profile(_, name, email, description, profile, prefs):
     Input("global-riesgo", "value"),
     Input("global-final", "value"),
     State("filters", "data"),
+    State("url", "pathname"),
     prevent_initial_call=True,
 )
-def update_filters(programa, periodo, nivel, academico, riesgo, final, current):
+def update_filters(programa, periodo, nivel, academico, riesgo, final, current, path):
+    current = current or {}
     new = {"programa": programa, "periodo": periodo, "nivel": nivel, "academico": academico, "riesgo": riesgo, "final": final}
-    if (current or {}) == new:
+    if (path or "").startswith("/estudiantes"):
+        # En el directorio el riesgo es fijo (alto) y los filtros de estado no
+        # existen: se conservan los valores globales para no contaminar Inicio.
+        for key in ("riesgo", "academico", "final"):
+            new[key] = current.get(key, "Todos")
+    if current == new:
         raise PreventUpdate
     return new
 
@@ -1744,7 +1787,7 @@ def search_students(term, values, prefs):
     if term is None:
         raise PreventUpdate
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
-    df = latest_view(values).copy()
+    df = latest_view(students_filters(values)).copy()
     if term:
         df = df[df.estudiante_id.str.contains(term.strip(), case=False, na=False)]
     follows = read_followups()
@@ -1786,9 +1829,12 @@ def export_frame(df, fmt):
 def export_any(clicks, path, values, fmt):
     if not clicks:
         raise PreventUpdate
-    df = latest_view(values).copy()
-    if (path or "").startswith("/alertas"):
-        df = df[df.riesgo.isin(["Alto", "Medio"])]
+    if (path or "").startswith("/estudiantes"):
+        df = latest_view(students_filters(values)).copy()
+    else:
+        df = latest_view(values).copy()
+        if (path or "").startswith("/alertas"):
+            df = df[df.riesgo.isin(["Alto", "Medio"])]
     return export_frame(df, fmt or "csv")
 
 
@@ -1854,6 +1900,5 @@ if __name__ == "__main__":
 def on_critical_alert_click(clicks, current_filters):
     if not clicks:
         raise PreventUpdate
-    updated = {**(current_filters or {})}
-    updated["riesgo"] = "Alto"
-    return "/estudiantes", updated
+    # El directorio ya muestra solo riesgo alto: no se contamina el filtro global.
+    return "/estudiantes", no_update
