@@ -104,7 +104,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "detail.note_ph": "Nota de acompañamiento",
         "detail.action_ph": "Próxima acción",
         "detail.date_ph": "Fecha próxima acción · AAAA-MM-DD",
-        "detail.back": "Volver al detalle",
+        "detail.back": "Cancelar",
         "detail.level_state": "Nivel {level} · {state}",
         "detail.avatar": "ST",
         # Variables
