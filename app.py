@@ -1018,7 +1018,7 @@ def followups_page(lang, dark, profile):
                     dcc.Dropdown(period_options(), max(history.periodo_academico), id="followup-period", clearable=False, className="filter"),
                     dcc.Textarea(id="followup-note", placeholder=tr(lang, "followups.note_ph"), className="textarea"),
                     dcc.Input(id="followup-action", placeholder=tr(lang, "followups.action_ph"), className="search-input"),
-                    dcc.Input(id="followup-date", type="date", className="search-input"),
+                    dcc.Input(id="followup-date", type="text", placeholder="AAAA-MM-DD", className="search-input"),
                     html.Div(
                         [
                             html.Button(tr(lang, "action.cancel"), id="close-followup", className="button", n_clicks=0),
@@ -1842,7 +1842,7 @@ def create_followup(_, student_id, period, note, action, next_date, profile, pre
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=8050)
+    app.run(debug=False, host="127.0.0.1", port=8050)
 
 @callback(
     Output("url", "pathname", allow_duplicate=True),
