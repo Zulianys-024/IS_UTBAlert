@@ -30,7 +30,7 @@ from utbapp.i18n import (
     tr,
 )
 
-app = Dash(__name__, suppress_callback_exceptions=True, title="Alertas Tempranas · UTB")
+app = Dash(__name__, suppress_callback_exceptions=True, title="Alertas Tempranas · UTB", assets_folder="assets")
 server = app.server
 students, history, _ = load_data()
 
@@ -138,6 +138,40 @@ def demo_banner(lang):
             html.Span(tr(lang, "demo.action"), className="banner-action"),
         ],
         className="demo-banner",
+    )
+
+
+def critical_alert_banner(high_count, lang):
+    if not high_count:
+        return html.Div(id="critical-alert-banner-container", style={"display": "none"})
+    return html.Div(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Div("⚠️", className="critical-alert-banner-icon"),
+                        html.Div(
+                            [
+                                html.H4(tr(lang, "rf05.banner_title", count=high_count)),
+                                html.P(tr(lang, "rf05.banner_desc", count=high_count)),
+                            ],
+                            className="critical-alert-banner-text",
+                        ),
+                    ],
+                    className="critical-alert-banner-content",
+                ),
+                html.Div(
+                    [
+                        html.Span(tr(lang, "rf05.banner_btn")),
+                    ],
+                    className="critical-alert-banner-action",
+                ),
+            ],
+            id="critical-alert-banner",
+            className="critical-alert-banner",
+            n_clicks=0,
+        ),
+        id="critical-alert-banner-container",
     )
 
 
@@ -252,16 +286,9 @@ def header(lang, dark, profile):
         [
             html.Div(
                 [
-                    html.Div("UTB", className="brand-mark"),
-                    html.Div(
-                        [
-                            html.Div("Universidad Tecnológica", className="brand-small"),
-                            html.Div("de Bolívar", className="brand-small"),
-                        ],
-                        className="brand-copy",
-                    ),
+                    html.Img(src="/assets/logo.png", alt="UTB", style={"height": "42px", "objectFit": "contain"}),
                     html.Div(className="brand-divider"),
-                    html.Div("Alertas Tempranas", className="product-name"),
+                    html.Div("UTBAlert - Sistema de Alertas Tempranas", className="product-name"),
                 ],
                 className="brand",
             ),
@@ -523,8 +550,8 @@ def trend_figure(lang, dark):
         hovertemplate="%{x}<br>%{y}<extra></extra>",
     )
     fig.update_layout(
-        height=230,
-        margin=dict(l=0, r=0, t=5, b=0),
+        height=250,
+        margin=dict(l=0, r=0, t=10, b=25),
         paper_bgcolor=theme["paper"],
         plot_bgcolor=theme["plot"],
         xaxis_title=None,
@@ -584,6 +611,7 @@ def home_page(values, lang, dark, profile):
             tr(lang, "home.subtitle"),
             action_button(tr(lang, "export.summary"), "export-btn"),
         ),
+        critical_alert_banner(counts.get("Alto", 0), lang),
         demo_banner(lang),
         filter_bar(values, lang),
         html.Div(
@@ -1330,11 +1358,7 @@ def login_page(lang):
                 [
                     html.Div(
                         [
-                            html.Div("UTB", className="login-logo-mark"),
-                            html.Div(
-                                [html.Span("Universidad Tecnológica"), html.Span("de Bolívar")],
-                                className="login-logo-copy",
-                            ),
+                            html.Img(src="/assets/logo2.png", alt="UTB", style={"height": "40px", "objectFit": "contain"}),
                             html.Div(className="login-logo-divider"),
                             html.Div(tr(lang, "login.product"), className="login-logo-product"),
                         ],
@@ -1818,4 +1842,18 @@ def create_followup(_, student_id, period, note, action, next_date, profile, pre
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="127.0.0.1", port=8050)
+    app.run(debug=True, host="127.0.0.1", port=8050)
+
+@callback(
+    Output("url", "pathname", allow_duplicate=True),
+    Output("filters", "data", allow_duplicate=True),
+    Input("critical-alert-banner", "n_clicks"),
+    State("filters", "data"),
+    prevent_initial_call=True,
+)
+def on_critical_alert_click(clicks, current_filters):
+    if not clicks:
+        raise PreventUpdate
+    updated = {**(current_filters or {})}
+    updated["riesgo"] = "Alto"
+    return "/estudiantes", updated
