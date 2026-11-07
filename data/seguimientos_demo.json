@@ -41,5 +41,15 @@
     "fecha_proxima_accion": "2026-11-07",
     "estado": "Nueva",
     "created_at": "2026-11-07T13:21:33"
+  },
+  {
+    "estudiante_id": "T00011940",
+    "periodo": "202601",
+    "responsable": "Bmaluenga",
+    "nota": "El estudiante es muy grocero ",
+    "proxima_accion": "Cita psicologica ",
+    "fecha_proxima_accion": "2026-11-14",
+    "estado": "Nueva",
+    "created_at": "2026-11-07T18:33:35"
   }
 ]
