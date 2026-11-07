@@ -3,12 +3,12 @@
    Solo estilos del entorno del login. Se carga después de style.css.
    ============================================================ */
 
-/* ---------- Fondo azul con líneas decorativas ---------- */
+/* ---------- Fondo azul con resplandor central y líneas SVG ---------- */
 html:has(.login-page),
 body:has(.login-page) {
   height: 100%;
   overflow: hidden;
-  background: #0B3FCB;
+  background: #1665EE;
 }
 
 .login-page {
@@ -24,16 +24,30 @@ body:has(.login-page) {
   min-height: 0;
   padding: clamp(12px, 3vh, 40px);
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 60% 52% at 50% 38%, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, 0) 64%),
-    url('/assets/login-lines.svg') center center / cover no-repeat,
-    radial-gradient(ellipse 88% 94% at 50% 34%, #5AA9FF 0%, #3D8BF7 30%, #135BE8 68%, #0B3FCB 100%);
+  background-color: #1665EE;
+  background-image: radial-gradient(ellipse 65% 75% at 51% 41%,
+    #80C5FC 0%, #56A8FC 22%, #2085FF 48%, #045EED 75%, #084DDA 100%);
   background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* SVG fijo: líneas finas y lóbulos translúcidos en las cuatro esquinas */
+.login-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDU3NiIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgc2xpY2UiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZmFkZVJpZ2h0IiB4MT0iNzUwIiB5MT0iMzMyIiB4Mj0iMTAyNCIgeTI9IjIyNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0JFRTFGRiIgc3RvcC1vcGFjaXR5PSIwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQkVFMUZGIiBzdG9wLW9wYWNpdHk9IjAuNSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxnIGZpbGw9IiMwQTQ2RTEiIGZpbGwtb3BhY2l0eT0iMC4zNSIgc3Ryb2tlPSIjQkVFMUZGIiBzdHJva2Utb3BhY2l0eT0iMC41NSIgc3Ryb2tlLXdpZHRoPSIxLjIiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0wLDg1IEM0MCw4MCA4NSw0NSAxMDUsMCBMMCwwIFoiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIvPjxwYXRoIGQ9Ik0wLDQzOCBDNjAsNDQ1IDEzMCw1MDAgMTk1LDU3NiBMMCw1NzYgWiIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIi8+PHBhdGggZD0iTTg5MCw1NzYgQzkzMCw1MjAgOTc1LDQ1MCAxMDI0LDQxNSBMMTAyNCw1NzYgWiIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIi8+PC9nPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0JFRTFGRiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTUiIHN0cm9rZS13aWR0aD0iMS4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxwYXRoIGQ9Ik0wLDEyNSBDNzAsOTUgMTQwLDUwIDE4OCwwIiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiLz48cGF0aCBkPSJNNzI1LDAgQzc5MCwzNSA4NTAsNDUgOTMwLDQ1IEM5ODAsNDggMTAwNSw2MCAxMDI0LDcyIiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiLz48cGF0aCBkPSJNNzUwLDMzMiBDODMwLDMxNSA5MjAsMjkwIDEwMjQsMjI1IiBzdHJva2U9InVybCgjZmFkZVJpZ2h0KSIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIi8+PHBhdGggZD0iTTAsMzgwIEM2MCw0MjAgMTEwLDQ4MCAxOTAsNTAwIEMyODAsNTE1IDM2MCw1MjAgNDI0LDU3NiIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIi8+PHBhdGggZD0iTTcyMCw1NzYgQzgwMCw1NDAgODgwLDU0MCA5MjAsNTEwIEM5NTUsNDgwIDk2MCw0MjAgMTAyNCwzNjgiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIvPjwvZz48L3N2Zz4=");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 /* ---------- Tarjeta central ---------- */
 .login-card {
   position: relative;
+  z-index: 1;
   isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 52%) minmax(0, 48%);
@@ -89,6 +103,31 @@ body:has(.login-page) {
 .login-card .login-visual {
   padding: clamp(18px, 3.6vh, 42px) clamp(22px, 3.2vw, 56px) clamp(16px, 3vh, 34px);
   justify-content: space-between;
+}
+
+/* Tinte azul oscuro sobre la foto para reforzar el contraste del texto */
+.login-card .login-visual::before {
+  z-index: 0;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(5, 20, 70, .55) 0%,
+      rgba(5, 20, 70, .20) 30%,
+      rgba(5, 20, 70, .25) 55%,
+      rgba(5, 20, 70, .70) 100%
+    );
+}
+
+.login-card .login-logo,
+.login-card .login-hero,
+.login-card .login-hero-footer {
+  position: relative;
+  z-index: 2;
+}
+
+.login-card .login-hero-title,
+.login-card .login-hero-text {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .45);
 }
 
 .login-card .login-logo {
@@ -207,6 +246,31 @@ body:has(.login-page) {
 .login-card .login-submit {
   height: clamp(42px, 6vh, 54px);
   font-size: clamp(12.5px, 1.3vh, 13.5px);
+}
+
+/* Botón plano: sin sombra, halo ni text-shadow en ningún estado */
+.login-card .login-submit,
+.login-card .login-submit:hover,
+.login-card .login-submit:focus,
+.login-card .login-submit:active,
+.login-card .login-submit:focus-visible {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none;
+  text-shadow: none;
+}
+
+.login-card .login-submit:hover {
+  background: #0F2FB5;
+}
+
+.login-card .login-submit:focus {
+  outline: none;
+}
+
+.login-card .login-submit:focus-visible {
+  outline: 2px solid #1239D6;
+  outline-offset: 2px;
 }
 
 .login-card .login-note {
@@ -431,7 +495,7 @@ body:has(.login-page) {
   }
 
   .login-card .login-visual:before {
-    background: linear-gradient(180deg, rgba(4, 15, 45, .02) 0%, rgba(4, 15, 45, .42) 100%);
+    background: linear-gradient(180deg, rgba(5, 20, 70, .45) 0%, rgba(5, 20, 70, .58) 100%);
   }
 
   .login-card .login-panel {
