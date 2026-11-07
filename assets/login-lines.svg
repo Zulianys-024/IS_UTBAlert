@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <g fill="none" stroke="#EAF4FF" stroke-width="1.6" stroke-linecap="round">
+    <!-- Esquina superior izquierda -->
+    <path d="M-90 285 C 150 265 315 155 395 10" opacity=".30"/>
+    <path d="M-90 415 C 210 375 445 215 565 0" opacity=".24"/>
+    <path d="M-90 550 C 275 490 605 280 735 0" opacity=".19"/>
+    <path d="M-90 690 C 345 615 765 365 915 0" opacity=".15"/>
+    <!-- Esquina superior derecha -->
+    <path d="M2010 285 C 1770 265 1605 155 1525 10" opacity=".30"/>
+    <path d="M2010 415 C 1710 375 1475 215 1355 0" opacity=".24"/>
+    <path d="M2010 550 C 1645 490 1315 280 1185 0" opacity=".19"/>
+    <path d="M2010 690 C 1575 615 1155 365 1005 0" opacity=".15"/>
+    <!-- Esquina inferior izquierda -->
+    <path d="M-90 795 C 150 815 315 925 395 1070" opacity=".28"/>
+    <path d="M-90 665 C 210 705 445 865 565 1080" opacity=".22"/>
+    <path d="M-90 530 C 275 590 605 800 735 1080" opacity=".18"/>
+    <path d="M-90 390 C 345 465 765 715 915 1080" opacity=".14"/>
+    <!-- Esquina inferior derecha -->
+    <path d="M2010 795 C 1770 815 1605 925 1525 1070" opacity=".28"/>
+    <path d="M2010 665 C 1710 705 1475 865 1355 1080" opacity=".22"/>
+    <path d="M2010 530 C 1645 590 1315 800 1185 1080" opacity=".18"/>
+    <path d="M2010 390 C 1575 465 1155 715 1005 1080" opacity=".14"/>
+    <!-- Arcos largos de refuerzo -->
+    <path d="M-60 940 C 430 890 900 930 1320 1080" opacity=".13"/>
+    <path d="M1980 940 C 1490 890 1020 930 600 1080" opacity=".13"/>
+    <path d="M470 -40 C 640 220 720 470 680 780" opacity=".09"/>
+    <path d="M1450 -40 C 1280 220 1200 470 1240 780" opacity=".09"/>
+  </g>
+</svg>

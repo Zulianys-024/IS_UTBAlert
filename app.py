@@ -1864,140 +1864,145 @@ def eye_icon(open_eye=True, color="#98A2B3"):
 def login_page(lang):
     return html.Div(
         [
-            html.Section(
+            html.Div(
                 [
-                    html.Div(
+                    html.Section(
                         [
-                            html.Img(src="/assets/logo2.png", alt="UTB", style={"height": "40px", "objectFit": "contain"}),
-                            html.Div(className="login-logo-divider"),
-                            html.Div(tr(lang, "login.product"), className="login-logo-product"),
-                        ],
-                        className="login-logo",
-                    ),
-                    html.Div(
-                        [
-                            html.Div(tr(lang, "login.hero_eyebrow"), className="login-hero-eyebrow"),
-                            html.H2(
-                                [tr(lang, "login.hero_title_1"), html.Br(), tr(lang, "login.hero_title_2")],
-                                className="login-hero-title",
-                            ),
-                            html.P(tr(lang, "login.hero_text"), className="login-hero-text"),
-                        ],
-                        className="login-hero",
-                    ),
-                    html.Div(
-                        [
-                            html.Span(tr(lang, "login.footer_left")),
-                            html.Span(tr(lang, "login.footer_right")),
-                        ],
-                        className="login-hero-footer",
-                    ),
-                ],
-                className="login-visual",
-            ),
-            html.Section(
-                [
-                    html.Div(
-                        [
-                            html.Div(tr(lang, "login.portal"), className="login-eyebrow"),
-                            html.H1(tr(lang, "login.title"), className="login-title"),
-                            html.P(tr(lang, "login.subtitle"), className="login-subtitle"),
                             html.Div(
                                 [
-                                    html.Label(tr(lang, "login.user"), htmlFor="login-user", className="login-label"),
-                                    dcc.Input(
-                                        id="login-user",
-                                        type="text",
-                                        value="bienestar@utb.edu.co",
-                                        placeholder="usuario@utb.edu.co",
-                                        className="login-input login-user-input",
-                                        autoComplete="username",
+                                    html.Img(src="/assets/logo2.png", alt="UTB", style={"height": "40px", "objectFit": "contain"}),
+                                    html.Div(className="login-logo-divider"),
+                                    html.Div(tr(lang, "login.product"), className="login-logo-product"),
+                                ],
+                                className="login-logo",
+                            ),
+                            html.Div(
+                                [
+                                    html.Div(tr(lang, "login.hero_eyebrow"), className="login-hero-eyebrow"),
+                                    html.H2(
+                                        [tr(lang, "login.hero_title_1"), html.Br(), tr(lang, "login.hero_title_2")],
+                                        className="login-hero-title",
                                     ),
-                                    html.Label(tr(lang, "login.password"), htmlFor="login-pass", className="login-label"),
+                                    html.P(tr(lang, "login.hero_text"), className="login-hero-text"),
+                                ],
+                                className="login-hero",
+                            ),
+                            html.Div(
+                                [
+                                    html.Span(tr(lang, "login.footer_left")),
+                                    html.Span(tr(lang, "login.footer_right")),
+                                ],
+                                className="login-hero-footer",
+                            ),
+                        ],
+                        className="login-visual",
+                    ),
+                    html.Section(
+                        [
+                            html.Div(
+                                [
+                                    html.Div(tr(lang, "login.portal"), className="login-eyebrow"),
+                                    html.H1(tr(lang, "login.title"), className="login-title"),
+                                    html.P(tr(lang, "login.subtitle"), className="login-subtitle"),
                                     html.Div(
                                         [
+                                            html.Label(tr(lang, "login.user"), htmlFor="login-user", className="login-label"),
                                             dcc.Input(
-                                                id="login-pass",
-                                                type="password",
-                                                value="demo",
-                                                placeholder="••••••••",
-                                                className="login-input",
-                                                autoComplete="current-password",
+                                                id="login-user",
+                                                type="text",
+                                                value="bienestar@utb.edu.co",
+                                                placeholder="usuario@utb.edu.co",
+                                                className="login-input login-user-input",
+                                                autoComplete="username",
+                                            ),
+                                            html.Label(tr(lang, "login.password"), htmlFor="login-pass", className="login-label"),
+                                            html.Div(
+                                                [
+                                                    dcc.Input(
+                                                        id="login-pass",
+                                                        type="password",
+                                                        value="demo",
+                                                        placeholder="••••••••",
+                                                        className="login-input",
+                                                        autoComplete="current-password",
+                                                    ),
+                                                    html.Button(
+                                                        eye_icon(),
+                                                        id="login-toggle-pass",
+                                                        className="login-eye",
+                                                        type="button",
+                                                        title=tr(lang, "login.show_password"),
+                                                        n_clicks=0,
+                                                        **{"aria-label": tr(lang, "login.show_password")},
+                                                    ),
+                                                ],
+                                                className="login-pass-wrap",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    dcc.Checklist(
+                                                        options=[{"label": tr(lang, "login.remember"), "value": "recordar"}],
+                                                        value=["recordar"],
+                                                        id="login-remember",
+                                                        className="login-remember",
+                                                    ),
+                                                    html.A(
+                                                        tr(lang, "login.forgot"),
+                                                        href="mailto:soporte@utb.edu.co?subject=Restablecer%20contrase%C3%B1a",
+                                                        className="login-link",
+                                                    ),
+                                                ],
+                                                className="login-options",
                                             ),
                                             html.Button(
-                                                eye_icon(),
-                                                id="login-toggle-pass",
-                                                className="login-eye",
+                                                tr(lang, "login.submit"),
+                                                id="login-button",
+                                                className="login-submit",
                                                 type="button",
-                                                title=tr(lang, "login.show_password"),
                                                 n_clicks=0,
-                                                **{"aria-label": tr(lang, "login.show_password")},
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Span("i", className="login-note-icon"),
+                                                    html.Span(tr(lang, "login.demo_note")),
+                                                ],
+                                                className="login-note",
+                                            ),
+                                            html.Div(id="login-error", className="login-error"),
+                                            html.Div(
+                                                [
+                                                    tr(lang, "login.help"),
+                                                    html.A("soporte@utb.edu.co", href="mailto:soporte@utb.edu.co"),
+                                                    " · ",
+                                                    html.A("+57 605 693 1919", href="tel:+576056931919"),
+                                                ],
+                                                className="login-help",
+                                            ),
+                                            html.Button(
+                                                [tr(lang, "login.demo_link"), html.Span("→", className="login-demo-arrow")],
+                                                id="login-demo",
+                                                className="login-demo",
+                                                type="button",
+                                                n_clicks=0,
                                             ),
                                         ],
-                                        className="login-pass-wrap",
+                                        className="login-form",
                                     ),
                                     html.Div(
                                         [
-                                            dcc.Checklist(
-                                                options=[{"label": tr(lang, "login.remember"), "value": "recordar"}],
-                                                value=["recordar"],
-                                                id="login-remember",
-                                                className="login-remember",
-                                            ),
-                                            html.A(
-                                                tr(lang, "login.forgot"),
-                                                href="mailto:soporte@utb.edu.co?subject=Restablecer%20contrase%C3%B1a",
-                                                className="login-link",
-                                            ),
+                                            html.Span(tr(lang, "login.copyright")),
+                                            html.A(tr(lang, "login.legal"), href="#", className="login-footer-link"),
                                         ],
-                                        className="login-options",
-                                    ),
-                                    html.Button(
-                                        tr(lang, "login.submit"),
-                                        id="login-button",
-                                        className="login-submit",
-                                        type="button",
-                                        n_clicks=0,
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Span("i", className="login-note-icon"),
-                                            html.Span(tr(lang, "login.demo_note")),
-                                        ],
-                                        className="login-note",
-                                    ),
-                                    html.Div(id="login-error", className="login-error"),
-                                    html.Div(
-                                        [
-                                            tr(lang, "login.help"),
-                                            html.A("soporte@utb.edu.co", href="mailto:soporte@utb.edu.co"),
-                                            " · ",
-                                            html.A("+57 605 693 1919", href="tel:+576056931919"),
-                                        ],
-                                        className="login-help",
-                                    ),
-                                    html.Button(
-                                        [tr(lang, "login.demo_link"), html.Span("→", className="login-demo-arrow")],
-                                        id="login-demo",
-                                        className="login-demo",
-                                        type="button",
-                                        n_clicks=0,
+                                        className="login-footer",
                                     ),
                                 ],
-                                className="login-form",
-                            ),
-                            html.Div(
-                                [
-                                    html.Span(tr(lang, "login.copyright")),
-                                    html.A(tr(lang, "login.legal"), href="#", className="login-footer-link"),
-                                ],
-                                className="login-footer",
+                                className="login-form-wrap",
                             ),
                         ],
-                        className="login-form-wrap",
+                        className="login-panel",
                     ),
                 ],
-                className="login-panel",
+                className="login-card",
             ),
             menu_anchors(),
         ],
