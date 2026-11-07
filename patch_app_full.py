@@ -4,18 +4,18 @@ with open('app.py', 'r', encoding='utf-8') as f:
 # 1. Update NAV to remove variables
 old_nav = '''NAV = [
     ("nav.home", "/", "⌂"),
-    ("nav.students", "/estudiantes", "♧"),
+    ("nav.students", "/estudiantes", "ϙ"),
     ("nav.variables", "/variables", "☷"),
-    ("nav.alerts", "/alertas", "♧"),
-    ("nav.followups", "/seguimientos", "▣"),
+    ("nav.alerts", "/alertas", "◬"),
+    ("nav.followups", "/seguimientos", "→"),
     ("nav.reports", "/reportes", "▥"),
 ]'''
 
 new_nav = '''NAV = [
     ("nav.home", "/", "⌂"),
-    ("nav.students", "/estudiantes", "♧"),
-    ("nav.alerts", "/alertas", "♧"),
-    ("nav.followups", "/seguimientos", "▣"),
+    ("nav.students", "/estudiantes", "ϙ"),
+    ("nav.alerts", "/alertas", "◬"),
+    ("nav.followups", "/seguimientos", "→"),
     ("nav.reports", "/reportes", "▥"),
 ]'''
 
@@ -300,4 +300,3 @@ with open('app.py', 'w', encoding='utf-8', newline='') as f:
     f.write(text)
 
 print("app.py modified successfully")
-

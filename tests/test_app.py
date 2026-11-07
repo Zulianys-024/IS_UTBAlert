@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import app as dashboard
+from utbapp.data_access import followup_history, read_followups, vigente_followup
 
 
 def test_all_dashboard_pages_render():
@@ -85,3 +86,44 @@ def test_report_export_uses_filter_state(report_format):
     )
     assert not exported.empty
     assert set(exported["riesgo"]) == {"Alto"}
+
+
+def test_followup_history_and_vigente_helpers():
+    dashboard.app._setup_server()
+
+    records = read_followups()
+    assert records
+    student_id = records[0]["estudiante_id"]
+
+    history = followup_history(student_id, records)
+    assert history
+    assert {r["estudiante_id"] for r in history} == {student_id}
+    created = [r.get("created_at") or "" for r in history]
+    assert created == sorted(created)  # del más antiguo al más reciente
+
+    vigente = vigente_followup(student_id, records)
+    assert vigente == history[-1]
+
+    assert followup_history("inexistente", records) == []
+    assert vigente_followup("inexistente", records) is None
+
+
+def test_followup_history_export_xlsx():
+    dashboard.app._setup_server()
+
+    records = read_followups()
+    assert records
+    selected = records[0]
+    history = followup_history(selected["estudiante_id"], records)
+
+    download = dashboard.export_followup_history(1, 0, dashboard.DEFAULT_PREFS)
+    assert download["filename"].startswith(f"seguimiento_{selected['estudiante_id']}_")
+    content = base64.b64decode(download["content"])
+    exported = pd.read_excel(io.BytesIO(content))
+    assert len(exported) == len(history)
+
+    expected_columns = [
+        dashboard.tr("es", key)
+        for key in ("col.period", "followups.note", "col.next_action", "followups.next_date", "followups.created_at", "followups.updated_at")
+    ]
+    assert list(exported.columns) == expected_columns

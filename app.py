@@ -15,7 +15,9 @@ from dash import Dash, Input, Output, State, callback, dash_table, dcc, html, no
 from dash.exceptions import PreventUpdate
 
 from utbapp.data_access import (
+    create_followup_update,
     delete_followup,
+    followup_history,
     followup_status,
     latest_by_student,
     load_data,
@@ -1348,6 +1350,18 @@ def followup_timestamp(record):
     return record.get("updated_at") or record.get("created_at")
 
 
+def latest_followup_rows(records):
+    """Devuelve (índice original, registro) del reporte vigente por estudiante."""
+    latest = {}
+    for index, record in enumerate(records):
+        student_id = record.get("estudiante_id")
+        current = latest.get(student_id)
+        timestamp = record.get("created_at") or ""
+        if current is None or timestamp >= (current[1].get("created_at") or ""):
+            latest[student_id] = (index, record)
+    return sorted(latest.values(), key=lambda item: item[1].get("estudiante_id") or "")
+
+
 def followups_table(records, lang, dark):
     """Tabla de casos con ID clicable y acciones de editar/eliminar."""
     header, cell = table_styles(dark)
@@ -1370,11 +1384,13 @@ def followups_table(records, lang, dark):
     )
 
     body_rows = []
-    for index, record in enumerate(records):
+    for index, record in latest_followup_rows(records):
         edited = bool(record.get("updated_at"))
         timestamp_children = [html.Span(format_followup_datetime(followup_timestamp(record)))]
         if edited:
             timestamp_children.append(html.Span(tr(lang, "followups.edited"), className="followup-edited"))
+        if sum(r.get("estudiante_id") == record.get("estudiante_id") for r in records) > 1:
+            timestamp_children.append(html.Span(tr(lang, "followups.updated_tag"), className="followup-updated"))
         period = record.get("periodo")
         body_rows.append(
             html.Tr(
@@ -1414,6 +1430,13 @@ def followups_table(records, lang, dark):
                                     n_clicks=0,
                                     type="button",
                                 ),
+                                html.Button(
+                                    tr(lang, "followups.update_report"),
+                                    id={"type": "followup-update", "index": index},
+                                    className="button followup-action-button",
+                                    n_clicks=0,
+                                    type="button",
+                                ),
                             ],
                             className="followup-actions",
                         ),
@@ -1446,6 +1469,16 @@ def followup_detail_modal(lang, record):
         )
     return [
         html.Div(
+            html.Button(
+                tr(lang, "followups.export_history"),
+                id="export-followup-history",
+                className="button",
+                n_clicks=0,
+                type="button",
+            ),
+            className="followup-export-bar",
+        ),
+        html.Div(
             [
                 html.H2(tr(lang, "followups.detail_title")),
                 html.Span(record.get("estudiante_id") or "", className="student-detail-code"),
@@ -1469,48 +1502,55 @@ def followup_detail_modal(lang, record):
                     n_clicks=0,
                     type="button",
                 ),
+                html.Button(
+                    tr(lang, "followups.update_report"),
+                    id="update-followup-detail",
+                    className="button primary",
+                    n_clicks=0,
+                    type="button",
+                ),
             ],
             className="modal-actions",
         ),
     ]
 
 
-def followup_edit_modal(lang, record):
+def followup_edit_modal(lang, record, is_update=False):
     """Formulario único de edición, reutilizado por tabla y detalle."""
     record = record or {}
     min_date, max_date = followup_date_bounds()
     return [
         html.Div(
             [
-                html.H2(tr(lang, "followups.edit_title")),
+                html.H2(tr(lang, "followups.update_title") if is_update else tr(lang, "followups.edit_title")),
                 html.Span(record.get("estudiante_id") or "", className="student-detail-code"),
             ],
             className="student-detail-head",
         ),
-        html.P(tr(lang, "followups.edit_sub"), className="student-detail-sub"),
+        html.P(tr(lang, "followups.update_sub") if is_update else tr(lang, "followups.edit_sub"), className="student-detail-sub"),
         dcc.Dropdown(
             period_options(),
-            record.get("periodo") or max(history.periodo_academico),
+            (None if is_update else record.get("periodo")) or max(history.periodo_academico),
             id="edit-followup-period",
             clearable=False,
             className="filter",
         ),
         dcc.Textarea(
             id="edit-followup-note",
-            value=record.get("nota") or "",
+            value="" if is_update else (record.get("nota") or ""),
             placeholder=tr(lang, "followups.note_ph"),
             className="textarea",
         ),
         dcc.Input(
             id="edit-followup-action",
-            value=record.get("proxima_accion") or "",
+            value="" if is_update else (record.get("proxima_accion") or ""),
             placeholder=tr(lang, "followups.action_ph"),
             className="search-input",
         ),
         dcc.Input(
             id="edit-followup-date",
             type="date",
-            value=_to_iso_date(record.get("fecha_proxima_accion")),
+            value=None if is_update else _to_iso_date(record.get("fecha_proxima_accion")),
             min=min_date,
             max=max_date,
             className="search-input",
@@ -2108,6 +2148,7 @@ app.layout = html.Div(
             **{"aria-live": "polite"},
         ),
         dcc.Download(id="download"),
+        dcc.Download(id="followup-history-download"),
     ],
     id="app",
     className="app theme-light",
@@ -2409,6 +2450,8 @@ def toggle_student_detail(
             return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_missing")))
         if student_id not in set(students.estudiante_id):
             return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_invalid")))
+        if any(r.get("estudiante_id") == student_id for r in read_followups()):
+            return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_exists")))
         try:
             next_date_value = date.fromisoformat(str(next_date)[:10])
         except (TypeError, ValueError):
@@ -2472,6 +2515,43 @@ def export_any(clicks, path, values, fmt):
 
 
 @callback(
+    Output("followup-history-download", "data"),
+    Input("export-followup-history", "n_clicks"),
+    State("selected-followup", "data"),
+    State("prefs", "data"),
+    prevent_initial_call=True,
+)
+def export_followup_history(clicks, selected_index, prefs):
+    if not clicks or selected_index is None:
+        raise PreventUpdate
+    records = read_followups()
+    if selected_index < 0 or selected_index >= len(records):
+        raise PreventUpdate
+    student_id = records[selected_index].get("estudiante_id")
+    history_records = followup_history(student_id, records)
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    labels = [
+        tr(lang, "col.period"),
+        tr(lang, "followups.note"),
+        tr(lang, "col.next_action"),
+        tr(lang, "followups.next_date"),
+        tr(lang, "followups.created_at"),
+        tr(lang, "followups.updated_at"),
+    ]
+    frame = pd.DataFrame([
+        [
+            r.get("periodo"), r.get("nota"), r.get("proxima_accion"),
+            r.get("fecha_proxima_accion"), r.get("created_at"), r.get("updated_at"),
+        ]
+        for r in history_records
+    ], columns=labels)
+    buffer = io.BytesIO()
+    frame.to_excel(buffer, index=False, engine="openpyxl")
+    filename_date = date.today().isoformat()
+    return dcc.send_bytes(buffer.getvalue(), f"seguimiento_{student_id}_{filename_date}.xlsx")
+
+
+@callback(
     Output("report-format-store", "data"),
     Input("report-format", "value"),
     prevent_initial_call=True,
@@ -2500,8 +2580,7 @@ def toggle_followup_detail(open_clicks, close_clicks, prefs):
         return "modal hidden", no_update, None
     if isinstance(trigger, dict) and trigger.get("type") == "followup-open":
         index = trigger.get("index")
-        clicks = open_clicks[index] if index is not None and index < len(open_clicks) else 0
-        if not clicks:
+        if not dash.ctx.triggered or not dash.ctx.triggered[0].get("value"):
             raise PreventUpdate
         records = read_followups()
         if index is None or index < 0 or index >= len(records):
@@ -2515,40 +2594,50 @@ def toggle_followup_detail(open_clicks, close_clicks, prefs):
     Output("followup-edit-body", "children"),
     Output("edit-followup", "data"),
     Input({"type": "followup-edit", "index": dash.ALL}, "n_clicks"),
+    Input({"type": "followup-update", "index": dash.ALL}, "n_clicks"),
     Input("edit-followup-detail", "n_clicks"),
+    Input("update-followup-detail", "n_clicks"),
     Input("close-followup-edit", "n_clicks"),
     State("selected-followup", "data"),
     State("prefs", "data"),
     prevent_initial_call=True,
 )
-def open_followup_edit(table_clicks, detail_clicks, close_clicks, selected_index, prefs):
+def open_followup_edit(table_clicks, update_clicks, detail_clicks, update_detail_clicks, close_clicks, selected_index, prefs):
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
     trigger = dash.ctx.triggered_id
     if trigger == "close-followup-edit":
         return "modal hidden", no_update, None
-    if trigger == "edit-followup-detail":
+    is_update = False
+    if trigger == "update-followup-detail":
+        if not update_detail_clicks:
+            raise PreventUpdate
+        index = selected_index
+        source = "detail"
+        is_update = True
+    elif trigger == "edit-followup-detail":
         if not detail_clicks:
             raise PreventUpdate
         index = selected_index
         source = "detail"
-    elif isinstance(trigger, dict) and trigger.get("type") == "followup-edit":
+    elif isinstance(trigger, dict) and trigger.get("type") in ("followup-edit", "followup-update"):
         index = trigger.get("index")
-        clicks = table_clicks[index] if index is not None and index < len(table_clicks) else 0
-        if not clicks:
+        if not dash.ctx.triggered or not dash.ctx.triggered[0].get("value"):
             raise PreventUpdate
         source = "table"
+        is_update = trigger.get("type") == "followup-update"
     else:
         raise PreventUpdate
     records = read_followups()
     if index is None or index < 0 or index >= len(records):
         raise PreventUpdate
-    return "modal", followup_edit_modal(lang, records[index]), {"index": index, "source": source}
+    return "modal", followup_edit_modal(lang, records[index], is_update), {"index": index, "source": source, "is_update": is_update}
 
 
 @callback(
     Output("followup-edit-modal", "className", allow_duplicate=True),
     Output("followup-detail-body", "children", allow_duplicate=True),
     Output("followups-version", "data", allow_duplicate=True),
+    Output("selected-followup", "data", allow_duplicate=True),
     Output("toast", "className", allow_duplicate=True),
     Output("toast", "children", allow_duplicate=True),
     Input("save-followup-edit", "n_clicks"),
@@ -2568,20 +2657,27 @@ def save_followup_edit(_, period, note, action, next_date, edit_state, prefs, ve
     edit_state = edit_state or {}
     index = edit_state.get("index")
     if index is None:
-        return no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_update_error"))
+        return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_update_error"))
     if not all([period, note, action, next_date]):
-        return no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_missing"))
+        return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_missing"))
     try:
         next_date_value = date.fromisoformat(str(next_date)[:10])
     except (TypeError, ValueError):
         next_date_value = None
     today = date.today()
     if next_date_value is None or next_date_value < today or next_date_value > add_months(today, FOLLOWUP_MAX_MONTHS):
-        return no_update, no_update, no_update, *toast("error", tr(lang, "detail.msg_date_range"))
+        return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "detail.msg_date_range"))
     try:
-        updated = update_followup(index, period, note, action, next_date)
+        if edit_state.get("is_update"):
+            previous = read_followups()[index]
+            updated = create_followup_update(
+                index, period, previous.get("responsable") or (prefs or DEFAULT_PROFILE).get("name") or "Camila",
+                note, action, next_date, previous.get("estado") or "Nueva",
+            )
+        else:
+            updated = update_followup(index, period, note, action, next_date)
     except Exception:
-        return no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_update_error"))
+        return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_update_error"))
     # Si la edición se abrió desde el detalle, se vuelve al detalle ya
     # actualizado. Si se abrió desde la tabla, todo se cierra y la tabla
     # se refresca mediante followups-version.
@@ -2590,6 +2686,7 @@ def save_followup_edit(_, period, note, action, next_date, edit_state, prefs, ve
         "modal hidden",
         detail_body,
         (version or 0) + 1,
+        len(read_followups()) - 1 if edit_state.get("is_update") and edit_state.get("source") == "detail" else no_update,
         *toast("success", tr(lang, "followups.msg_updated")),
     )
 
@@ -2616,8 +2713,7 @@ def manage_followup_delete(table_clicks, cancel_clicks, confirm_clicks, delete_i
         return "modal hidden", no_update, None, no_update, no_update, no_update
     if isinstance(trigger, dict) and trigger.get("type") == "followup-delete":
         index = trigger.get("index")
-        clicks = table_clicks[index] if index is not None and index < len(table_clicks) else 0
-        if not clicks:
+        if not dash.ctx.triggered or not dash.ctx.triggered[0].get("value"):
             raise PreventUpdate
         records = read_followups()
         if index is None or index < 0 or index >= len(records):

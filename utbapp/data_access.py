@@ -55,6 +55,8 @@ def _write_followups(records: list[dict]) -> None:
 
 def save_followup(student_id: str, period: str, responsible: str, note: str, next_action: str, next_date: str, status: str = "Nueva"):
     records = read_followups()
+    if any(r.get("estudiante_id") == student_id for r in records):
+        raise ValueError("El estudiante ya tiene un seguimiento; usa actualizar reporte")
     records.append({
         "estudiante_id": student_id,
         "periodo": period,
@@ -67,6 +69,27 @@ def save_followup(student_id: str, period: str, responsible: str, note: str, nex
     })
     _write_followups(records)
     return records[-1]
+
+
+def create_followup_update(index: int, period: str, responsible: str, note: str, next_action: str, next_date: str, status: str = "Nueva") -> dict:
+    """Agrega un nuevo registro para el estudiante, conservando el anterior."""
+    records = read_followups()
+    if index < 0 or index >= len(records):
+        raise IndexError("Seguimiento no encontrado")
+    previous = records[index]
+    record = {
+        "estudiante_id": previous["estudiante_id"],
+        "periodo": period,
+        "responsable": responsible,
+        "nota": note,
+        "proxima_accion": next_action,
+        "fecha_proxima_accion": next_date,
+        "estado": status,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+    }
+    records.append(record)
+    _write_followups(records)
+    return record
 
 
 def update_followup(
@@ -102,6 +125,31 @@ def delete_followup(index: int) -> dict:
     removed = records.pop(index)
     _write_followups(records)
     return removed
+
+
+def followup_history(student_id: str, records: list[dict] | None = None) -> list[dict]:
+    """Historial completo de seguimientos de un estudiante.
+
+    La fuente de datos (``data/seguimientos_demo.json``) es una lista plana
+    donde cada estudiante puede tener varios registros, identificables por
+    su ``created_at``. Esta función los agrupa y ordena del más antiguo
+    (primera nota registrada) al más reciente.
+    """
+    records = records if records is not None else read_followups()
+    return sorted(
+        (r for r in records if r.get("estudiante_id") == student_id),
+        key=lambda r: r.get("created_at") or "",
+    )
+
+
+def vigente_followup(student_id: str, records: list[dict] | None = None) -> dict | None:
+    """Registro vigente de un estudiante: el más reciente de su historial.
+
+    Es el que se muestra en la tabla de casos (la fila "actual"); los demás
+    registros del historial permanecen como versiones anteriores.
+    """
+    history = followup_history(student_id, records)
+    return history[-1] if history else None
 
 
 def followup_status(student_id: str, records: list[dict] | None = None) -> str:

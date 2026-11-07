@@ -11,23 +11,25 @@
     "updated_at": "2026-11-07T11:19:57"
   },
   {
-    "estudiante_id": "T00011813",
+    "estudiante_id": "T00011387",
     "periodo": "202601",
     "responsable": "Camila",
-    "nota": "Llamamos para darle una cita con la psicóloga",
-    "proxima_accion": "Esperar respuesta",
-    "fecha_proxima_accion": "2026-11-07",
+    "nota": "Ya se han obtenido los detalles del psiquatra :)",
+    "proxima_accion": "Esperar resultado de las sesiones",
+    "fecha_proxima_accion": "2026-11-23",
     "estado": "Nueva",
-    "created_at": "2026-11-07T11:21:47"
+    "created_at": "2026-11-07T12:08:41",
+    "updated_at": "2026-11-07T12:32:05"
   },
   {
-    "estudiante_id": "T00011813",
+    "estudiante_id": "T00011226",
     "periodo": "202601",
     "responsable": "Camila",
-    "nota": "No nos responde",
-    "proxima_accion": "Voolver a enviar cita",
-    "fecha_proxima_accion": "2026-11-16",
+    "nota": "Este estudiante tiene una asistencia muy baja y un promedio igual de bajo. Hay que hacer una cita con el psicólogo de la universidad para saber los motivos.",
+    "proxima_accion": "Citar al estudiante",
+    "fecha_proxima_accion": "2026-11-09",
     "estado": "Nueva",
-    "created_at": "2026-11-07T11:23:06"
+    "created_at": "2026-11-07T12:14:57",
+    "updated_at": "2026-11-07T12:16:13"
   }
 ]
