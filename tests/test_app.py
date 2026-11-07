@@ -26,15 +26,17 @@ def test_pages_render_in_english_and_dark_theme():
         assert page is not None
 
 
-def test_students_directory_only_shows_high_risk():
+def test_students_directory_defaults_to_active_high_risk():
     dashboard.app._setup_server()
 
     full = dashboard.latest_view({})
-    directory = dashboard.latest_view(dashboard.students_filters({}))
+    directory = dashboard.latest_view(dashboard.dir_filters({}))
 
     assert not directory.empty
     assert set(directory["riesgo"].unique()) == {"Alto"}
+    assert set(directory["estado_final"].unique()) == {"ACTIVO"}
     assert len(directory) < len(full)
+    assert len(directory) == dashboard.active_high_risk_count()
 
 
 @pytest.mark.parametrize("report_format", ["csv", "xlsx"])

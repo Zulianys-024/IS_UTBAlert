@@ -22,8 +22,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "demo.text": " La información proviene de los CSV sintéticos del repositorio y se usa para ilustrar el flujo de acompañamiento.",
         "demo.action": "Entendido",
         # RF-05: Alerta temprana crítica
-        "rf05.banner_title": "Alerta Temprana Crítica: {count} Estudiantes en Riesgo Alto",
-        "rf05.banner_desc": "Se han identificado casos de atención prioritaria. Pulsa aquí para revisar el listado con filtro de riesgo alto activado.",
+        "rf05.banner_title": "Alerta Temprana Crítica: {count} Estudiantes Activos en Riesgo Alto",
+        "rf05.banner_desc": "Se han identificado casos de atención prioritaria. Pulsa aquí para revisar los estudiantes activos en riesgo alto.",
         "rf05.banner_btn": "Ver estudiantes en riesgo alto →",
         # Menú de usuario
         "menu.profile": "Mi perfil",
@@ -49,6 +49,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "action.save_followup": "Guardar seguimiento",
         "action.cancel": "Cancelar",
         "students.analyzed": "Estudiantes analizados",
+        "students.total": "Estudiantes",
         "indicator.high": "Indicador alto",
         "indicator.medium": "Indicador medio",
         "indicator.low": "Indicador bajo",
@@ -267,8 +268,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "demo.text": " The information comes from the repository's synthetic CSV files and illustrates the support workflow.",
         "demo.action": "Got it",
         # RF-05: Critical early warning
-        "rf05.banner_title": "Critical Early Warning: {count} Students at High Risk",
-        "rf05.banner_desc": "High-priority cases identified. Click here to review student records filtered by high risk.",
+        "rf05.banner_title": "Critical Early Warning: {count} Active Students at High Risk",
+        "rf05.banner_desc": "High-priority cases identified. Click here to review active students at high risk.",
         "rf05.banner_btn": "View high-risk students →",
         "menu.profile": "My profile",
         "menu.language": "Language",
@@ -292,6 +293,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "action.save_followup": "Save follow-up",
         "action.cancel": "Cancel",
         "students.analyzed": "Students analyzed",
+        "students.total": "Students",
         "indicator.high": "High indicator",
         "indicator.medium": "Medium indicator",
         "indicator.low": "Low indicator",

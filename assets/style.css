@@ -246,4 +246,5 @@ siendo clickeables cuando el menú está abierto. */
 .compact-kpi .kpi-value{font-size:21px;margin:0;line-height:1.05;letter-spacing:-.5px}
 .compact-kpi .kpi-label{margin:0;font-size:11px}
 .compact-kpi-copy{display:flex;flex-direction:column;gap:1px}
-@media(max-width:900px){.filter-row{flex-direction:column;align-items:stretch}.compact-kpi{min-width:0}}
+.dash-dropdown-focus-target{width:100%}
+@media(max-width:900px){.filter-row{flex-direction:column;align-items:stretch}.compact-kpi{min-width:0;align-self:flex-start}}
