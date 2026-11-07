@@ -48,6 +48,11 @@ def read_followups() -> list[dict]:
         return []
 
 
+def _write_followups(records: list[dict]) -> None:
+    FOLLOWUPS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    FOLLOWUPS_PATH.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def save_followup(student_id: str, period: str, responsible: str, note: str, next_action: str, next_date: str, status: str = "Nueva"):
     records = read_followups()
     records.append({
@@ -60,9 +65,43 @@ def save_followup(student_id: str, period: str, responsible: str, note: str, nex
         "estado": status,
         "created_at": datetime.now().isoformat(timespec="seconds"),
     })
-    FOLLOWUPS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    FOLLOWUPS_PATH.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_followups(records)
     return records[-1]
+
+
+def update_followup(
+    index: int,
+    period: str,
+    note: str,
+    next_action: str,
+    next_date: str,
+) -> dict:
+    """Actualiza un seguimiento existente conservando su fecha de creación.
+
+    ``created_at`` nunca se sobrescribe; cada edición agrega/actualiza
+    ``updated_at`` con el momento exacto del guardado.
+    """
+    records = read_followups()
+    if index < 0 or index >= len(records):
+        raise IndexError("Seguimiento no encontrado")
+    record = records[index]
+    record["periodo"] = period
+    record["nota"] = note
+    record["proxima_accion"] = next_action
+    record["fecha_proxima_accion"] = next_date
+    record["updated_at"] = datetime.now().isoformat(timespec="seconds")
+    _write_followups(records)
+    return record
+
+
+def delete_followup(index: int) -> dict:
+    """Elimina el seguimiento indicado de la fuente de datos local."""
+    records = read_followups()
+    if index < 0 or index >= len(records):
+        raise IndexError("Seguimiento no encontrado")
+    removed = records.pop(index)
+    _write_followups(records)
+    return removed
 
 
 def followup_status(student_id: str, records: list[dict] | None = None) -> str:

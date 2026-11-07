@@ -12,7 +12,7 @@ def test_all_dashboard_pages_render():
 
     prefs = {"lang": "es", "theme": "light"}
     for path in ("/", "/estudiantes", "/variables", "/alertas", "/seguimientos", "/reportes", "/perfil", "/perfil/editar"):
-        page = dashboard.render(path, {"user": "Camila"}, {}, prefs, {})
+        page = dashboard.render(path, {"user": "Camila"}, {}, prefs, {}, False, 0)
         assert page is not None
 
 
@@ -21,7 +21,7 @@ def test_pages_render_in_english_and_dark_theme():
 
     prefs = {"lang": "en", "theme": "dark"}
     for path in ("/", "/estudiantes", "/perfil", "/perfil/editar"):
-        page = dashboard.render(path, {"user": "Camila"}, {}, prefs, {"name": "Camila"})
+        page = dashboard.render(path, {"user": "Camila"}, {}, prefs, {"name": "Camila"}, False, 0)
         assert page is not None
 
 

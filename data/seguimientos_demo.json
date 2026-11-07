@@ -1,22 +1,33 @@
 [
   {
-    "estudiante_id": "T00011234",
-    "periodo": "202601",
-    "responsable": "Camila",
-    "nota": "fdfdfdfdf",
-    "proxima_accion": "dfdfd",
-    "fecha_proxima_accion": "2026-11-19",
-    "estado": "Nueva",
-    "created_at": "2026-11-02T17:17:05"
-  },
-  {
     "estudiante_id": "T00011387",
     "periodo": "202601",
     "responsable": "Camila",
-    "nota": "Requiere psiquatra",
-    "proxima_accion": "Mandarlo al psiquiatra",
-    "fecha_proxima_accion": "2026/11/05",
+    "nota": "Primera sesión con el psiquiatra, vamos para la segunda",
+    "proxima_accion": "Esperar resultados de psiquiatría",
+    "fecha_proxima_accion": "2026-11-11",
     "estado": "Nueva",
-    "created_at": "2026-11-04T14:47:10"
+    "created_at": "2026-11-04T14:47:10",
+    "updated_at": "2026-11-07T11:19:57"
+  },
+  {
+    "estudiante_id": "T00011813",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "Llamamos para darle una cita con la psicóloga",
+    "proxima_accion": "Esperar respuesta",
+    "fecha_proxima_accion": "2026-11-07",
+    "estado": "Nueva",
+    "created_at": "2026-11-07T11:21:47"
+  },
+  {
+    "estudiante_id": "T00011813",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "No nos responde",
+    "proxima_accion": "Voolver a enviar cita",
+    "fecha_proxima_accion": "2026-11-16",
+    "estado": "Nueva",
+    "created_at": "2026-11-07T11:23:06"
   }
 ]

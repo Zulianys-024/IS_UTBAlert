@@ -4,7 +4,7 @@ import calendar
 import io
 import json
 import time
-from datetime import date
+from datetime import date, datetime
 from urllib.parse import quote
 
 import dash
@@ -15,12 +15,14 @@ from dash import Dash, Input, Output, State, callback, dash_table, dcc, html, no
 from dash.exceptions import PreventUpdate
 
 from utbapp.data_access import (
+    delete_followup,
     followup_status,
     latest_by_student,
     load_data,
     period_label,
     read_followups,
     save_followup,
+    update_followup,
 )
 from utbapp.i18n import (
     LANG_NAMES,
@@ -37,7 +39,6 @@ from utbapp.i18n import (
 app = Dash(__name__, suppress_callback_exceptions=True, title="Alertas Tempranas · UTB", assets_folder="assets")
 server = app.server
 students, history, _ = load_data()
-
 
 @server.route("/manus-routes.json")
 def manus_routes():
@@ -57,13 +58,12 @@ def manus_routes():
         mimetype="application/json",
     )
 
-
 PALETTE = {"Alto": "#E3545B", "Medio": "#E8B000", "Bajo": "#009664"}
 NAV = [
     ("nav.home", "/", "⌂"),
-    ("nav.students", "/estudiantes", "♧"),
-    ("nav.alerts", "/alertas", "♧"),
-    ("nav.followups", "/seguimientos", "▣"),
+    ("nav.students", "/estudiantes", "ϙ"),
+    ("nav.alerts", "/alertas", "◬"),
+    ("nav.followups", "/seguimientos", "→"),
     ("nav.reports", "/reportes", "▥"),
 ]
 DEFAULT_PREFS = {"lang": "es", "theme": "light"}
@@ -1306,41 +1306,243 @@ def alerts_page(values, lang, dark, dismissed_demo=False):
 # === PAGES 2 ===
 
 
+def _parse_followup_datetime(value):
+    """Convierte los formatos de fecha usados por la demo en ``datetime``."""
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        pass
+    for fmt in ("%Y/%m/%d %H:%M:%S", "%Y/%m/%d", "%d/%m/%Y %H:%M", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def format_followup_datetime(value):
+    """Fecha legible DD/MM/AAAA HH:mm (compatible con registros antiguos)."""
+    parsed = _parse_followup_datetime(value)
+    if parsed is None:
+        return str(value) if value else "—"
+    return parsed.strftime("%d/%m/%Y %H:%M")
+
+
+def format_followup_date(value):
+    parsed = _parse_followup_datetime(value)
+    if parsed is None:
+        return str(value) if value else "—"
+    return parsed.strftime("%d/%m/%Y")
+
+
+def _to_iso_date(value):
+    parsed = _parse_followup_datetime(value)
+    return parsed.date().isoformat() if parsed else None
+
+
+def followup_timestamp(record):
+    """``updated_at`` cuando existe; de lo contrario la creación original."""
+    return record.get("updated_at") or record.get("created_at")
+
+
+def followups_table(records, lang, dark):
+    """Tabla de casos con ID clicable y acciones de editar/eliminar."""
+    header, cell = table_styles(dark)
+    header_style = {**header, "padding": "10px 6px"}
+    cell_style = {**cell, "padding": "10px 6px", "fontSize": "11.5px"}
+    actions_style = {**cell_style}
+
+    head = html.Thead(
+        html.Tr(
+            [
+                html.Th(tr(lang, "col.student"), style=header_style),
+                html.Th(tr(lang, "col.responsible"), style=header_style),
+                html.Th(tr(lang, "col.next_action"), style=header_style),
+                html.Th(tr(lang, "col.period"), style=header_style),
+                html.Th(tr(lang, "followups.datetime"), style=header_style),
+                html.Th(tr(lang, "col.status"), style=header_style),
+                html.Th(tr(lang, "followups.actions"), style=header_style),
+            ]
+        )
+    )
+
+    body_rows = []
+    for index, record in enumerate(records):
+        edited = bool(record.get("updated_at"))
+        timestamp_children = [html.Span(format_followup_datetime(followup_timestamp(record)))]
+        if edited:
+            timestamp_children.append(html.Span(tr(lang, "followups.edited"), className="followup-edited"))
+        period = record.get("periodo")
+        body_rows.append(
+            html.Tr(
+                [
+                    html.Td(
+                        html.Button(
+                            record.get("estudiante_id") or "—",
+                            id={"type": "followup-open", "index": index},
+                            className="followup-link",
+                            n_clicks=0,
+                            type="button",
+                        ),
+                        style=cell_style,
+                    ),
+                    html.Td(record.get("responsable") or "—", style=cell_style),
+                    html.Td(record.get("proxima_accion") or "—", style=cell_style),
+                    html.Td(
+                        period_label(period) if period else "—",
+                        style={**cell_style, "whiteSpace": "nowrap"},
+                    ),
+                    html.Td(html.Div(timestamp_children, className="followup-date-cell"), style=cell_style),
+                    html.Td(status_badge(lang, record.get("estado")), style=cell_style),
+                    html.Td(
+                        html.Div(
+                            [
+                                html.Button(
+                                    tr(lang, "followups.edit"),
+                                    id={"type": "followup-edit", "index": index},
+                                    className="button followup-action-button",
+                                    n_clicks=0,
+                                    type="button",
+                                ),
+                                html.Button(
+                                    tr(lang, "followups.delete"),
+                                    id={"type": "followup-delete", "index": index},
+                                    className="button followup-action-button followup-delete-button",
+                                    n_clicks=0,
+                                    type="button",
+                                ),
+                            ],
+                            className="followup-actions",
+                        ),
+                        style=actions_style,
+                    ),
+                ]
+            )
+        )
+
+    return html.Div(
+        html.Table([head, html.Tbody(body_rows)], className="followup-table"),
+        className="followup-table-wrap",
+    )
+
+
+def followup_detail_modal(lang, record):
+    """Detalle de solo lectura de un seguimiento (sin formulario)."""
+    record = record or {}
+    items = [
+        detail_item(tr(lang, "col.period"), period_label(record["periodo"]) if record.get("periodo") else "—"),
+        detail_item(tr(lang, "col.responsible"), record.get("responsable") or "—"),
+        detail_item(tr(lang, "followups.note"), record.get("nota") or "—"),
+        detail_item(tr(lang, "col.next_action"), record.get("proxima_accion") or "—"),
+        detail_item(tr(lang, "followups.next_date"), format_followup_date(record.get("fecha_proxima_accion"))),
+        detail_item(tr(lang, "followups.created_at"), format_followup_datetime(record.get("created_at"))),
+    ]
+    if record.get("updated_at"):
+        items.append(
+            detail_item(tr(lang, "followups.updated_at"), format_followup_datetime(record.get("updated_at")))
+        )
+    return [
+        html.Div(
+            [
+                html.H2(tr(lang, "followups.detail_title")),
+                html.Span(record.get("estudiante_id") or "", className="student-detail-code"),
+            ],
+            className="student-detail-head",
+        ),
+        html.Dl(items, className="followup-detail-list"),
+        html.Div(
+            [
+                html.Button(
+                    tr(lang, "followups.close"),
+                    id="close-followup-detail",
+                    className="button",
+                    n_clicks=0,
+                    type="button",
+                ),
+                html.Button(
+                    tr(lang, "followups.edit"),
+                    id="edit-followup-detail",
+                    className="button primary",
+                    n_clicks=0,
+                    type="button",
+                ),
+            ],
+            className="modal-actions",
+        ),
+    ]
+
+
+def followup_edit_modal(lang, record):
+    """Formulario único de edición, reutilizado por tabla y detalle."""
+    record = record or {}
+    min_date, max_date = followup_date_bounds()
+    return [
+        html.Div(
+            [
+                html.H2(tr(lang, "followups.edit_title")),
+                html.Span(record.get("estudiante_id") or "", className="student-detail-code"),
+            ],
+            className="student-detail-head",
+        ),
+        html.P(tr(lang, "followups.edit_sub"), className="student-detail-sub"),
+        dcc.Dropdown(
+            period_options(),
+            record.get("periodo") or max(history.periodo_academico),
+            id="edit-followup-period",
+            clearable=False,
+            className="filter",
+        ),
+        dcc.Textarea(
+            id="edit-followup-note",
+            value=record.get("nota") or "",
+            placeholder=tr(lang, "followups.note_ph"),
+            className="textarea",
+        ),
+        dcc.Input(
+            id="edit-followup-action",
+            value=record.get("proxima_accion") or "",
+            placeholder=tr(lang, "followups.action_ph"),
+            className="search-input",
+        ),
+        dcc.Input(
+            id="edit-followup-date",
+            type="date",
+            value=_to_iso_date(record.get("fecha_proxima_accion")),
+            min=min_date,
+            max=max_date,
+            className="search-input",
+        ),
+    ]
+
+
+def followup_delete_modal(lang, record):
+    """Confirmación explícita antes de eliminar un seguimiento."""
+    student_id = (record or {}).get("estudiante_id") or "—"
+    return [
+        html.H2(tr(lang, "followups.delete_title")),
+        html.P(tr(lang, "followups.delete_text")),
+        html.P(
+            [
+                tr(lang, "followups.delete_target"),
+                html.B(student_id, id="followup-delete-target"),
+            ],
+            className="followup-delete-target",
+        ),
+        html.P(tr(lang, "followups.delete_warning"), className="followup-delete-warning"),
+    ]
+
+
 def followups_page(lang, dark, profile, dismissed_demo=False):
     records = read_followups()
-    followup_form = html.Div(
-        [
-            html.Div(
-                [
-                    html.H2(tr(lang, "followups.form_title")),
-                    html.P(tr(lang, "followups.form_sub")),
-                    dcc.Input(id="followup-student", placeholder=tr(lang, "followups.student_ph"), className="search-input"),
-                    dcc.Dropdown(period_options(), max(history.periodo_academico), id="followup-period", clearable=False, className="filter"),
-                    dcc.Textarea(id="followup-note", placeholder=tr(lang, "followups.note_ph"), className="textarea"),
-                    dcc.Input(id="followup-action", placeholder=tr(lang, "followups.action_ph"), className="search-input"),
-                    dcc.Input(id="followup-date", type="text", placeholder="AAAA-MM-DD", className="search-input"),
-                    html.Div(
-                        [
-                            html.Button(tr(lang, "action.cancel"), id="close-followup", className="button", n_clicks=0),
-                            html.Button(tr(lang, "action.save_followup"), id="save-followup", className="button primary", n_clicks=0),
-                        ],
-                        className="modal-actions",
-                    ),
-                    html.Div(id="followup-message", className="form-message"),
-                ],
-                className="modal-card",
-            )
-        ],
-        id="followup-modal",
-        className="modal hidden",
-    )
     if not records:
         return [
             page_heading(
                 lang,
                 tr(lang, "followups.title"),
                 tr(lang, "followups.subtitle"),
-                action_button(tr(lang, "action.register_followup"), "open-followup"),
             ),
             demo_banner(lang, dismissed_demo),
             html.Div(
@@ -1351,24 +1553,12 @@ def followups_page(lang, dark, profile, dismissed_demo=False):
                 ],
                 className="empty-state",
             ),
-            followup_form,
         ]
-    rows = [
-        {
-            "estudiante": r["estudiante_id"],
-            "responsable": r["responsable"],
-            "proxima_accion": r["proxima_accion"],
-            "periodo": period_label(r["periodo"]),
-            "estado": status_label(lang, r["estado"]),
-        }
-        for r in records
-    ]
     return [
         page_heading(
             lang,
             tr(lang, "followups.title"),
             tr(lang, "followups.subtitle_full"),
-            action_button(tr(lang, "action.register_followup"), "open-followup"),
         ),
         demo_banner(lang, dismissed_demo),
         html.Div(
@@ -1377,21 +1567,10 @@ def followups_page(lang, dark, profile, dismissed_demo=False):
                     [html.H2(tr(lang, "followups.cases")), html.P(tr(lang, "followups.cases_sub"))],
                     className="card-head",
                 ),
-                small_table(
-                    rows,
-                    [
-                        (tr(lang, "col.student"), "estudiante"),
-                        (tr(lang, "col.responsible"), "responsable"),
-                        (tr(lang, "col.next_action"), "proxima_accion"),
-                        (tr(lang, "col.period"), "periodo"),
-                        (tr(lang, "col.status"), "estado"),
-                    ],
-                    dark,
-                ),
+                followups_table(records, lang, dark),
             ],
             className="card table-card",
         ),
-        followup_form,
     ]
 
 
@@ -1827,6 +2006,10 @@ app.layout = html.Div(
         dcc.Store(id="filters", data={}),
         dcc.Store(id="report-format-store", data="csv"),
         dcc.Store(id="selected-student"),
+        dcc.Store(id="selected-followup"),
+        dcc.Store(id="edit-followup"),
+        dcc.Store(id="delete-followup"),
+        dcc.Store(id="followups-version", data=0),
         dcc.Store(id="demo-dismissed", data=False, storage_type="session"),
         html.Div(id="root", children=login_page("es")),
         html.Div(
@@ -1840,6 +2023,83 @@ app.layout = html.Div(
             className="modal hidden",
             role="dialog",
             **{"aria-modal": "true", "aria-labelledby": "student-detail-title"},
+        ),
+        # Detalle de solo lectura del seguimiento (se abre al pulsar el ID).
+        html.Div(
+            html.Div(
+                followup_detail_modal("es", {}),
+                id="followup-detail-body",
+                className="modal-card followup-detail-card",
+                tabIndex="-1",
+            ),
+            id="followup-detail-modal",
+            className="modal hidden",
+            role="dialog",
+            **{"aria-modal": "true"},
+        ),
+        # Formulario de edición compartido por la tabla y el detalle.
+        html.Div(
+            html.Div(
+                [
+                    html.Div(id="followup-edit-body"),
+                    html.Div(
+                        [
+                            html.Button(
+                                tr("es", "action.cancel"),
+                                id="close-followup-edit",
+                                className="button",
+                                n_clicks=0,
+                                type="button",
+                            ),
+                            html.Button(
+                                tr("es", "followups.save_changes"),
+                                id="save-followup-edit",
+                                className="button primary",
+                                n_clicks=0,
+                                type="button",
+                            ),
+                        ],
+                        className="modal-actions",
+                    ),
+                ],
+                className="modal-card followup-edit-card",
+            ),
+            id="followup-edit-modal",
+            className="modal hidden",
+            role="dialog",
+            **{"aria-modal": "true"},
+        ),
+        # Confirmación de eliminación (nunca borra sin confirmar).
+        html.Div(
+            html.Div(
+                [
+                    html.Div(id="followup-delete-body"),
+                    html.Div(
+                        [
+                            html.Button(
+                                tr("es", "action.cancel"),
+                                id="cancel-followup-delete",
+                                className="button",
+                                n_clicks=0,
+                                type="button",
+                            ),
+                            html.Button(
+                                tr("es", "followups.delete_confirm"),
+                                id="confirm-followup-delete",
+                                className="button primary followup-delete-confirm",
+                                n_clicks=0,
+                                type="button",
+                            ),
+                        ],
+                        className="modal-actions",
+                    ),
+                ],
+                className="modal-card followup-delete-card",
+            ),
+            id="followup-delete-modal",
+            className="modal hidden",
+            role="dialog",
+            **{"aria-modal": "true"},
         ),
         html.Div(
             id="toast",
@@ -1874,8 +2134,9 @@ def apply_theme(prefs, auth):
     Input("prefs", "data"),
     Input("profile", "data"),
     Input("demo-dismissed", "data"),
+    Input("followups-version", "data"),
 )
-def render(path, auth, values, prefs, profile, demo_dismissed):
+def render(path, auth, values, prefs, profile, demo_dismissed, followups_version):
     prefs = {**DEFAULT_PREFS, **(prefs or {})}
     lang = prefs["lang"]
     dark = prefs["theme"] == "dark"
@@ -2220,43 +2481,163 @@ def store_report_format(value):
 
 
 @callback(
-    Output("followup-modal", "className"),
-    Input("open-followup", "n_clicks"),
-    Input("close-followup", "n_clicks"),
-    Input("save-followup", "n_clicks"),
-    prevent_initial_call=True,
-)
-def toggle_followup_modal(open_clicks, close_clicks, save_clicks):
-    if dash.ctx.triggered_id == "open-followup":
-        if not open_clicks:
-            raise PreventUpdate
-        return "modal"
-    return "modal hidden"
-
-
-@callback(
-    Output("followup-message", "children"),
-    Input("save-followup", "n_clicks"),
-    State("followup-student", "value"),
-    State("followup-period", "value"),
-    State("followup-note", "value"),
-    State("followup-action", "value"),
-    State("followup-date", "value"),
-    State("profile", "data"),
+    Output("followup-detail-modal", "className"),
+    Output("followup-detail-body", "children"),
+    Output("selected-followup", "data"),
+    Input({"type": "followup-open", "index": dash.ALL}, "n_clicks"),
+    Input("close-followup-detail", "n_clicks"),
     State("prefs", "data"),
     prevent_initial_call=True,
 )
-def create_followup(_, student_id, period, note, action, next_date, profile, prefs):
+def toggle_followup_detail(open_clicks, close_clicks, prefs):
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    trigger = dash.ctx.triggered_id
+    if trigger == "close-followup-detail":
+        if not close_clicks:
+            raise PreventUpdate
+        # Se conserva el cuerpo (oculto) para que los botones Cerrar/Editar
+        # sigan existiendo como Inputs del callback y no se rompa el layout.
+        return "modal hidden", no_update, None
+    if isinstance(trigger, dict) and trigger.get("type") == "followup-open":
+        index = trigger.get("index")
+        clicks = open_clicks[index] if index is not None and index < len(open_clicks) else 0
+        if not clicks:
+            raise PreventUpdate
+        records = read_followups()
+        if index is None or index < 0 or index >= len(records):
+            raise PreventUpdate
+        return "modal", followup_detail_modal(lang, records[index]), index
+    raise PreventUpdate
+
+
+@callback(
+    Output("followup-edit-modal", "className"),
+    Output("followup-edit-body", "children"),
+    Output("edit-followup", "data"),
+    Input({"type": "followup-edit", "index": dash.ALL}, "n_clicks"),
+    Input("edit-followup-detail", "n_clicks"),
+    Input("close-followup-edit", "n_clicks"),
+    State("selected-followup", "data"),
+    State("prefs", "data"),
+    prevent_initial_call=True,
+)
+def open_followup_edit(table_clicks, detail_clicks, close_clicks, selected_index, prefs):
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    trigger = dash.ctx.triggered_id
+    if trigger == "close-followup-edit":
+        return "modal hidden", no_update, None
+    if trigger == "edit-followup-detail":
+        if not detail_clicks:
+            raise PreventUpdate
+        index = selected_index
+        source = "detail"
+    elif isinstance(trigger, dict) and trigger.get("type") == "followup-edit":
+        index = trigger.get("index")
+        clicks = table_clicks[index] if index is not None and index < len(table_clicks) else 0
+        if not clicks:
+            raise PreventUpdate
+        source = "table"
+    else:
+        raise PreventUpdate
+    records = read_followups()
+    if index is None or index < 0 or index >= len(records):
+        raise PreventUpdate
+    return "modal", followup_edit_modal(lang, records[index]), {"index": index, "source": source}
+
+
+@callback(
+    Output("followup-edit-modal", "className", allow_duplicate=True),
+    Output("followup-detail-body", "children", allow_duplicate=True),
+    Output("followups-version", "data", allow_duplicate=True),
+    Output("toast", "className", allow_duplicate=True),
+    Output("toast", "children", allow_duplicate=True),
+    Input("save-followup-edit", "n_clicks"),
+    State("edit-followup-period", "value"),
+    State("edit-followup-note", "value"),
+    State("edit-followup-action", "value"),
+    State("edit-followup-date", "value"),
+    State("edit-followup", "data"),
+    State("prefs", "data"),
+    State("followups-version", "data"),
+    prevent_initial_call=True,
+)
+def save_followup_edit(_, period, note, action, next_date, edit_state, prefs, version):
     if not _:
         raise PreventUpdate
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
-    if not all([student_id, period, note, action, next_date]):
-        return tr(lang, "followups.msg_missing")
-    if student_id not in set(students.estudiante_id):
-        return tr(lang, "followups.msg_invalid")
-    responsible = (profile or DEFAULT_PROFILE).get("name") or "Camila"
-    save_followup(student_id, period, responsible, note, action, next_date, "Nueva")
-    return tr(lang, "followups.msg_saved")
+    edit_state = edit_state or {}
+    index = edit_state.get("index")
+    if index is None:
+        return no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_update_error"))
+    if not all([period, note, action, next_date]):
+        return no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_missing"))
+    try:
+        next_date_value = date.fromisoformat(str(next_date)[:10])
+    except (TypeError, ValueError):
+        next_date_value = None
+    today = date.today()
+    if next_date_value is None or next_date_value < today or next_date_value > add_months(today, FOLLOWUP_MAX_MONTHS):
+        return no_update, no_update, no_update, *toast("error", tr(lang, "detail.msg_date_range"))
+    try:
+        updated = update_followup(index, period, note, action, next_date)
+    except Exception:
+        return no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_update_error"))
+    # Si la edición se abrió desde el detalle, se vuelve al detalle ya
+    # actualizado. Si se abrió desde la tabla, todo se cierra y la tabla
+    # se refresca mediante followups-version.
+    detail_body = followup_detail_modal(lang, updated) if edit_state.get("source") == "detail" else no_update
+    return (
+        "modal hidden",
+        detail_body,
+        (version or 0) + 1,
+        *toast("success", tr(lang, "followups.msg_updated")),
+    )
+
+
+@callback(
+    Output("followup-delete-modal", "className"),
+    Output("followup-delete-body", "children"),
+    Output("delete-followup", "data"),
+    Output("followups-version", "data", allow_duplicate=True),
+    Output("toast", "className", allow_duplicate=True),
+    Output("toast", "children", allow_duplicate=True),
+    Input({"type": "followup-delete", "index": dash.ALL}, "n_clicks"),
+    Input("cancel-followup-delete", "n_clicks"),
+    Input("confirm-followup-delete", "n_clicks"),
+    State("delete-followup", "data"),
+    State("prefs", "data"),
+    State("followups-version", "data"),
+    prevent_initial_call=True,
+)
+def manage_followup_delete(table_clicks, cancel_clicks, confirm_clicks, delete_index, prefs, version):
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    trigger = dash.ctx.triggered_id
+    if trigger == "cancel-followup-delete":
+        return "modal hidden", no_update, None, no_update, no_update, no_update
+    if isinstance(trigger, dict) and trigger.get("type") == "followup-delete":
+        index = trigger.get("index")
+        clicks = table_clicks[index] if index is not None and index < len(table_clicks) else 0
+        if not clicks:
+            raise PreventUpdate
+        records = read_followups()
+        if index is None or index < 0 or index >= len(records):
+            raise PreventUpdate
+        return "modal", followup_delete_modal(lang, records[index]), index, no_update, no_update, no_update
+    if trigger == "confirm-followup-delete":
+        if not confirm_clicks or delete_index is None:
+            raise PreventUpdate
+        try:
+            delete_followup(delete_index)
+        except Exception:
+            return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_delete_error"))
+        return (
+            "modal hidden",
+            no_update,
+            None,
+            (version or 0) + 1,
+            *toast("success", tr(lang, "followups.msg_deleted")),
+        )
+    raise PreventUpdate
 
 
 if __name__ == "__main__":

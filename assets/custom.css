@@ -419,3 +419,185 @@
     border-color: #1E2A3F;
   }
 }
+
+/* ==========================================================================
+   Seguimientos · tabla de casos, detalle, edición y confirmación
+   --------------------------------------------------------------------------
+   Se reutilizan .modal, .modal-card, .modal-actions, .button y .status.
+   ========================================================================== */
+
+.followup-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.followup-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.followup-table th,
+.followup-table td {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.followup-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.followup-link:hover,
+.followup-link:focus-visible {
+  color: #0F2BA8;
+}
+
+.followup-date-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.followup-edited {
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #EEF3FF;
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+.followup-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.button.followup-action-button {
+  padding: 4px 7px;
+  font-size: 10.5px;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.button.followup-delete-button {
+  border-color: #F3C2C6;
+  background: #FFF6F6;
+  color: #B03A42;
+}
+
+.button.followup-delete-button:hover {
+  background: #FFEAEA;
+}
+
+.modal-card.followup-detail-card {
+  width: 580px;
+  max-width: calc(100vw - 48px);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+.followup-detail-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px 24px;
+  margin: 20px 0 22px;
+}
+
+.followup-detail-list > div {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.followup-detail-list dt {
+  margin-bottom: 4px;
+  color: #8A94A2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+
+.followup-detail-list dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.modal-card.followup-edit-card {
+  width: 520px;
+  max-width: calc(100vw - 48px);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-card.followup-delete-card {
+  width: 440px;
+  max-width: calc(100vw - 48px);
+}
+
+.followup-delete-target {
+  margin-top: 12px !important;
+}
+
+.followup-delete-warning {
+  color: #B03A42 !important;
+  font-weight: 600;
+}
+
+.button.followup-delete-confirm {
+  border-color: #D84951;
+  background: #D84951;
+  color: #FFFFFF;
+}
+
+.theme-dark .followup-link {
+  color: #7EA2FF;
+}
+
+.theme-dark .followup-edited {
+  background: #16294A;
+  color: #9DB8FF;
+}
+
+.theme-dark .button.followup-delete-button {
+  border-color: #5A2A30;
+  background: #3A1D22;
+  color: #FFB3B8;
+}
+
+.theme-dark .followup-detail-list > div {
+  border-color: #1E2A3F;
+}
+
+.theme-dark .followup-detail-list dt {
+  color: #8FA0B8;
+}
+
+.theme-dark .followup-detail-list dd {
+  color: #E6EDF8;
+}
+
+.theme-dark .followup-delete-warning {
+  color: #FFB3B8 !important;
+}
+
+@media (max-width: 640px) {
+  .followup-detail-list {
+    grid-template-columns: 1fr;
+  }
+}
