@@ -1201,10 +1201,21 @@ def student_detail_modal(lang, data):
                     clearable=False,
                     className="filter",
                 ),
-                dcc.Textarea(id="student-detail-note", placeholder=tr(lang, "detail.note_ph"), className="textarea"),
-                dcc.Input(id="student-detail-action", placeholder=tr(lang, "detail.action_ph"), className="search-input"),
+                dcc.Textarea(
+                    id="student-detail-note",
+                    value="",
+                    placeholder=tr(lang, "detail.note_ph"),
+                    className="textarea",
+                ),
+                dcc.Input(
+                    id="student-detail-action",
+                    value="",
+                    placeholder=tr(lang, "detail.action_ph"),
+                    className="search-input",
+                ),
                 dcc.Input(
                     id="student-detail-date",
+                    value="",
                     type="date",
                     min=min_date,
                     max=max_date,
@@ -1252,6 +1263,7 @@ def students_page(values, lang, dark, dismissed_demo=False):
     rows["señal_principal"] = rows["señal_principal"].map(lambda x: signal_label(lang, x))
     rows = rows.to_dict("records")
     header, cell = table_styles(dark)
+    link_color = "#7FA6FF" if dark else "#153DDA"
     kpi_tone, kpi_icon, kpi_label = {
         "Alto": ("red", "△", "indicator.high"),
         "Medio": ("amber", "♢", "indicator.medium"),
@@ -1310,7 +1322,7 @@ def students_page(values, lang, dark, dismissed_demo=False):
                     style_data_conditional=[
                         {
                             "if": {"column_id": "estudiante"},
-                            "color": "#153DDA",
+                            "color": link_color,
                             "textDecoration": "underline",
                             "cursor": "pointer",
                             "fontWeight": "500",
@@ -1465,6 +1477,7 @@ def alerts_page(values, lang, dark, dismissed_demo=False, active_tab="all"):
     new_count = int((df.estado == "Nueva").sum())
     if active_tab in ALERTS_TAB_STATUS:
         df = df[df.estado.isin(ALERTS_TAB_STATUS[active_tab])]
+    link_color = "#7FA6FF" if dark else "#153DDA"
     rows = [
         {
             "estudiante": r.estudiante_id,
@@ -1538,7 +1551,7 @@ def alerts_page(values, lang, dark, dismissed_demo=False, active_tab="all"):
                     style_data_conditional=[
                         {
                             "if": {"column_id": "estudiante"},
-                            "color": "#153DDA",
+                            "color": link_color,
                             "textDecoration": "underline",
                             "cursor": "pointer",
                             "fontWeight": "500",
