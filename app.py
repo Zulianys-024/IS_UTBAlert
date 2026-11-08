@@ -36,6 +36,7 @@ from utbapp.auth import (
     update_photo,
 )
 from utbapp.data_access import (
+    close_followup,
     create_followup_update,
     delete_followup,
     followup_history,
@@ -46,6 +47,7 @@ from utbapp.data_access import (
     read_followups,
     save_followup,
     update_followup,
+    vigente_followup,
 )
 from utbapp.i18n import (
     LANG_NAMES,
@@ -745,17 +747,22 @@ def table_styles(dark):
     return header, cell
 
 
-def small_table(rows, columns, dark=False):
+def small_table(rows, columns, dark=False, table_id=None, style_data_conditional=None):
     header, cell = table_styles(dark)
-    return dash_table.DataTable(
-        data=rows,
-        columns=[{"name": name, "id": key} for name, key in columns],
-        page_size=8,
-        style_as_list_view=True,
-        style_table={"overflowX": "auto"},
-        style_header=header,
-        style_cell=cell,
-    )
+    options = {
+        "data": rows,
+        "columns": [{"name": name, "id": key} for name, key in columns],
+        "page_size": 8,
+        "style_as_list_view": True,
+        "style_table": {"overflowX": "auto"},
+        "style_header": header,
+        "style_cell": cell,
+    }
+    if table_id:
+        options["id"] = table_id
+    if style_data_conditional:
+        options["style_data_conditional"] = style_data_conditional
+    return dash_table.DataTable(**options)
 
 
 def chart_palette(dark):
@@ -1440,7 +1447,14 @@ def alerts_summary_title(lang, count):
     return tr(lang, "alerts.new_count", count=fmt_int(count, lang))
 
 
-def alerts_page(values, lang, dark, dismissed_demo=False):
+ALERTS_TAB_STATUS = {
+    "new": ("Nueva",),
+    "followup": ("En seguimiento",),
+    "closed": ("Cerrada",),
+}
+
+
+def alerts_page(values, lang, dark, dismissed_demo=False, active_tab="all"):
     df = latest_view(values).copy()
     follows = read_followups()
     df["periodo"] = df.periodo_academico.map(period_label)
@@ -1448,16 +1462,29 @@ def alerts_page(values, lang, dark, dismissed_demo=False):
     df = df[df.riesgo.isin(["Alto", "Medio"])].sort_values(
         ["puntaje_riesgo", "promedio_ponderado_acumulado"], ascending=[False, True]
     )
+    new_count = int((df.estado == "Nueva").sum())
+    if active_tab in ALERTS_TAB_STATUS:
+        df = df[df.estado.isin(ALERTS_TAB_STATUS[active_tab])]
     rows = [
         {
-            "prioridad": risk_label(lang, r.riesgo),
             "estudiante": r.estudiante_id,
+            "prioridad": risk_label(lang, r.riesgo),
             "motivo": signal_label(lang, r.senal_principal),
             "periodo": r.periodo,
             "estado": status_label(lang, r.estado),
         }
         for _, r in df.iterrows()
     ]
+
+    def tab(label_key, tab_id, key):
+        return html.Button(
+            tr(lang, label_key),
+            id=f"alerts-tab-{tab_id}",
+            className=f"tab{' active' if active_tab == key else ''}",
+            n_clicks=0,
+            type="button",
+        )
+
     return [
         page_heading(
             lang,
@@ -1471,7 +1498,7 @@ def alerts_page(values, lang, dark, dismissed_demo=False):
                 icon_box("♧", "blue"),
                 html.Div(
                     [
-                        html.H2(alerts_summary_title(lang, (df.estado == "Nueva").sum())),
+                        html.H2(alerts_summary_title(lang, new_count)),
                         html.P(tr(lang, "alerts.summary_sub")),
                     ]
                 ),
@@ -1490,23 +1517,33 @@ def alerts_page(values, lang, dark, dismissed_demo=False):
                 ),
                 html.Div(
                     [
-                        html.Span(tr(lang, "alerts.tab_all"), className="tab active"),
-                        html.Span(tr(lang, "alerts.tab_new"), className="tab"),
-                        html.Span(tr(lang, "alerts.tab_followup"), className="tab"),
-                        html.Span(tr(lang, "alerts.tab_closed"), className="tab"),
+                        tab("alerts.tab_all", "all", "all"),
+                        tab("alerts.tab_new", "new", "new"),
+                        tab("alerts.tab_followup", "followup", "followup"),
+                        tab("alerts.tab_closed", "closed", "closed"),
                     ],
                     className="tabs",
                 ),
                 small_table(
                     rows,
                     [
-                        (tr(lang, "col.priority"), "prioridad"),
                         (tr(lang, "col.student"), "estudiante"),
+                        (tr(lang, "col.priority"), "prioridad"),
                         (tr(lang, "col.reason"), "motivo"),
                         (tr(lang, "col.period"), "periodo"),
                         (tr(lang, "col.status"), "estado"),
                     ],
                     dark,
+                    table_id="alerts-table",
+                    style_data_conditional=[
+                        {
+                            "if": {"column_id": "estudiante"},
+                            "color": "#153DDA",
+                            "textDecoration": "underline",
+                            "cursor": "pointer",
+                            "fontWeight": "500",
+                        }
+                    ],
                 ),
             ],
             className="card table-card",
@@ -1602,6 +1639,42 @@ def followups_table(records, lang, dark):
         if sum(r.get("estudiante_id") == record.get("estudiante_id") for r in records) > 1:
             timestamp_children.append(html.Span(tr(lang, "followups.updated_tag"), className="followup-updated"))
         period = record.get("periodo")
+        is_closed = record.get("estado") == "Cerrada"
+        action_buttons = [
+            html.Button(
+                tr(lang, "followups.edit"),
+                id={"type": "followup-edit", "index": index},
+                className="button followup-action-button",
+                n_clicks=0,
+                type="button",
+            ),
+            html.Button(
+                tr(lang, "followups.delete"),
+                id={"type": "followup-delete", "index": index},
+                className="button followup-action-button followup-delete-button",
+                n_clicks=0,
+                type="button",
+            ),
+        ]
+        if not is_closed:
+            action_buttons.extend(
+                [
+                    html.Button(
+                        tr(lang, "followups.update_report"),
+                        id={"type": "followup-update", "index": index},
+                        className="button followup-action-button",
+                        n_clicks=0,
+                        type="button",
+                    ),
+                    html.Button(
+                        tr(lang, "followups.close_action"),
+                        id={"type": "followup-close", "index": index},
+                        className="button followup-action-button",
+                        n_clicks=0,
+                        type="button",
+                    ),
+                ]
+            )
         body_rows.append(
             html.Tr(
                 [
@@ -1624,32 +1697,7 @@ def followups_table(records, lang, dark):
                     html.Td(html.Div(timestamp_children, className="followup-date-cell"), style=cell_style),
                     html.Td(status_badge(lang, record.get("estado")), style=cell_style),
                     html.Td(
-                        html.Div(
-                            [
-                                html.Button(
-                                    tr(lang, "followups.edit"),
-                                    id={"type": "followup-edit", "index": index},
-                                    className="button followup-action-button",
-                                    n_clicks=0,
-                                    type="button",
-                                ),
-                                html.Button(
-                                    tr(lang, "followups.delete"),
-                                    id={"type": "followup-delete", "index": index},
-                                    className="button followup-action-button followup-delete-button",
-                                    n_clicks=0,
-                                    type="button",
-                                ),
-                                html.Button(
-                                    tr(lang, "followups.update_report"),
-                                    id={"type": "followup-update", "index": index},
-                                    className="button followup-action-button",
-                                    n_clicks=0,
-                                    type="button",
-                                ),
-                            ],
-                            className="followup-actions",
-                        ),
+                        html.Div(action_buttons, className="followup-actions"),
                         style=actions_style,
                     ),
                 ]
@@ -1677,6 +1725,33 @@ def followup_detail_modal(lang, record):
         items.append(
             detail_item(tr(lang, "followups.updated_at"), format_followup_datetime(record.get("updated_at")))
         )
+    actions = [
+        html.Button(
+            tr(lang, "followups.close"),
+            id="close-followup-detail",
+            className="button",
+            n_clicks=0,
+            type="button",
+        ),
+        html.Button(
+            tr(lang, "followups.edit"),
+            id="edit-followup-detail",
+            className="button primary",
+            n_clicks=0,
+            type="button",
+        ),
+    ]
+    # Un seguimiento cerrado ya no permite actualizar el reporte.
+    if record.get("estado") != "Cerrada":
+        actions.append(
+            html.Button(
+                tr(lang, "followups.update_report"),
+                id="update-followup-detail",
+                className="button primary",
+                n_clicks=0,
+                type="button",
+            )
+        )
     return [
         html.Div(
             html.Button(
@@ -1696,32 +1771,91 @@ def followup_detail_modal(lang, record):
             className="student-detail-head",
         ),
         html.Dl(items, className="followup-detail-list"),
+        html.Div(actions, className="modal-actions"),
+    ]
+
+
+def closed_followup_detail_modal(lang, record):
+    """Detalle de un seguimiento cerrado: lectura, actualizaciones y cierre."""
+    record = record or {}
+    items = [
+        detail_item(tr(lang, "col.period"), period_label(record["periodo"]) if record.get("periodo") else "—"),
+        detail_item(tr(lang, "col.responsible"), record.get("responsable") or "—"),
+        detail_item(tr(lang, "followups.note"), record.get("nota") or "—"),
+        detail_item(tr(lang, "col.next_action"), record.get("proxima_accion") or "—"),
+        detail_item(tr(lang, "followups.next_date"), format_followup_date(record.get("fecha_proxima_accion"))),
+        detail_item(tr(lang, "followups.created_at"), format_followup_datetime(record.get("created_at"))),
+    ]
+    if record.get("updated_at"):
+        items.append(
+            detail_item(tr(lang, "followups.updated_at"), format_followup_datetime(record.get("updated_at")))
+        )
+    return [
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.H2(tr(lang, "alerts.closed_detail_title")),
+                        html.Span(
+                            [html.Span(className="dot"), tr(lang, "followups.closed_badge")],
+                            className="status green",
+                        ),
+                    ],
+                    className="closed-detail-title",
+                ),
+                html.Span(record.get("estudiante_id") or "", className="student-detail-code"),
+            ],
+            className="student-detail-head",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Span(tr(lang, "followups.report_updates")),
+                        html.B(str(int(record.get("report_updates") or 0))),
+                    ],
+                    className="closed-detail-stat",
+                ),
+                html.Div(
+                    [
+                        html.Span(tr(lang, "followups.closed_at")),
+                        html.B(format_followup_datetime(record.get("closed_at"))),
+                    ],
+                    className="closed-detail-stat",
+                ),
+            ],
+            className="closed-detail-highlight",
+        ),
+        html.Dl(items, className="followup-detail-list closed-detail-list"),
         html.Div(
             [
                 html.Button(
                     tr(lang, "followups.close"),
-                    id="close-followup-detail",
+                    id="close-closed-followup-detail",
                     className="button",
-                    n_clicks=0,
-                    type="button",
-                ),
-                html.Button(
-                    tr(lang, "followups.edit"),
-                    id="edit-followup-detail",
-                    className="button primary",
-                    n_clicks=0,
-                    type="button",
-                ),
-                html.Button(
-                    tr(lang, "followups.update_report"),
-                    id="update-followup-detail",
-                    className="button primary",
                     n_clicks=0,
                     type="button",
                 ),
             ],
             className="modal-actions",
         ),
+    ]
+
+
+def followup_close_modal(lang, record):
+    """Confirmación explícita antes de cerrar un seguimiento."""
+    student_id = (record or {}).get("estudiante_id") or "—"
+    return [
+        html.H2(tr(lang, "followups.close_title")),
+        html.P(tr(lang, "followups.close_text")),
+        html.P(
+            [
+                tr(lang, "followups.delete_target"),
+                html.B(student_id),
+            ],
+            className="followup-delete-target",
+        ),
+        html.P(tr(lang, "followups.close_warning"), className="followup-delete-warning"),
     ]
 
 
@@ -2363,11 +2497,13 @@ app.layout = html.Div(
         dcc.Store(id="menu-open", data=False),
         dcc.Store(id="filters", data={}),
         dcc.Store(id="dir-filters", data={}),
+        dcc.Store(id="alerts-tab", data="all"),
         dcc.Store(id="report-format-store", data="csv"),
         dcc.Store(id="selected-student"),
         dcc.Store(id="selected-followup"),
         dcc.Store(id="edit-followup"),
         dcc.Store(id="delete-followup"),
+        dcc.Store(id="close-followup"),
         dcc.Store(id="followups-version", data=0),
         dcc.Store(id="demo-dismissed", data=False, storage_type="session"),
         html.Div(id="root", children=login_page("es")),
@@ -2460,6 +2596,51 @@ app.layout = html.Div(
             role="dialog",
             **{"aria-modal": "true"},
         ),
+        # Detalle del seguimiento cerrado (se abre desde Alertas > Cerradas).
+        html.Div(
+            html.Div(
+                closed_followup_detail_modal("es", {}),
+                id="closed-followup-detail-body",
+                className="modal-card followup-detail-card closed-followup-detail-card",
+                tabIndex="-1",
+            ),
+            id="closed-followup-detail-modal",
+            className="modal hidden",
+            role="dialog",
+            **{"aria-modal": "true"},
+        ),
+        # Confirmación de cierre del seguimiento (nunca cierra sin confirmar).
+        html.Div(
+            html.Div(
+                [
+                    html.Div(id="followup-close-body"),
+                    html.Div(
+                        [
+                            html.Button(
+                                tr("es", "action.cancel"),
+                                id="cancel-followup-close",
+                                className="button",
+                                n_clicks=0,
+                                type="button",
+                            ),
+                            html.Button(
+                                tr("es", "followups.close_confirm"),
+                                id="confirm-followup-close",
+                                className="button primary",
+                                n_clicks=0,
+                                type="button",
+                            ),
+                        ],
+                        className="modal-actions",
+                    ),
+                ],
+                className="modal-card followup-delete-card",
+            ),
+            id="followup-close-modal",
+            className="modal hidden",
+            role="dialog",
+            **{"aria-modal": "true"},
+        ),
         html.Div(
             id="toast",
             className="toast",
@@ -2496,8 +2677,9 @@ def apply_theme(prefs, auth):
     Input("demo-dismissed", "data"),
     Input("followups-version", "data"),
     Input("dir-filters", "data"),
+    Input("alerts-tab", "data"),
 )
-def render(path, auth, values, prefs, profile, demo_dismissed, followups_version, dir_values=None):
+def render(path, auth, values, prefs, profile, demo_dismissed, followups_version, dir_values=None, alerts_tab="all"):
     prefs = {**DEFAULT_PREFS, **(prefs or {})}
     lang = prefs["lang"]
     dark = prefs["theme"] == "dark"
@@ -2525,7 +2707,7 @@ def render(path, auth, values, prefs, profile, demo_dismissed, followups_version
     if path == "/estudiantes":
         content = students_page(dir_values, lang, dark, dismissed_demo)
     elif path == "/alertas":
-        content = alerts_page(values, lang, dark, dismissed_demo)
+        content = alerts_page(values, lang, dark, dismissed_demo, alerts_tab)
     elif path == "/seguimientos":
         content = followups_page(lang, dark, profile, dismissed_demo)
     elif path == "/reportes":
@@ -3166,7 +3348,7 @@ def save_followup_edit(_, period, note, action, next_date, edit_state, prefs, ve
             previous = read_followups()[index]
             updated = create_followup_update(
                 index, period, previous.get("responsable") or (prefs or DEFAULT_PROFILE).get("name") or "Camila",
-                note, action, next_date, previous.get("estado") or "Nueva",
+                note, action, next_date, "En seguimiento",
             )
         else:
             updated = update_followup(index, period, note, action, next_date)
@@ -3256,3 +3438,187 @@ def dismiss_demo_banner(clicks):
     if not clicks:
         raise PreventUpdate
     return True
+
+
+ALERTS_TAB_BUTTONS = {
+    "alerts-tab-all": "all",
+    "alerts-tab-new": "new",
+    "alerts-tab-followup": "followup",
+    "alerts-tab-closed": "closed",
+}
+
+
+@callback(
+    Output("alerts-tab", "data"),
+    Output("alerts-tab-all", "className"),
+    Output("alerts-tab-new", "className"),
+    Output("alerts-tab-followup", "className"),
+    Output("alerts-tab-closed", "className"),
+    Input("alerts-tab-all", "n_clicks"),
+    Input("alerts-tab-new", "n_clicks"),
+    Input("alerts-tab-followup", "n_clicks"),
+    Input("alerts-tab-closed", "n_clicks"),
+    prevent_initial_call=True,
+)
+def select_alerts_tab(*_clicks):
+    active = ALERTS_TAB_BUTTONS.get(dash.ctx.triggered_id, "all")
+    return (
+        active,
+        *[
+            f"tab{' active' if key == active else ''}"
+            for key in ("all", "new", "followup", "closed")
+        ],
+    )
+
+
+def _followup_index(records, record):
+    """Índice original del registro vigente dentro de la lista plana."""
+    for index, candidate in enumerate(records):
+        if candidate is record:
+            return index
+    try:
+        return records.index(record)
+    except ValueError:
+        return None
+
+
+@callback(
+    Output("url", "pathname", allow_duplicate=True),
+    Output("student-detail-modal", "className", allow_duplicate=True),
+    Output("student-detail-body", "children", allow_duplicate=True),
+    Output("selected-student", "data", allow_duplicate=True),
+    Output("followup-detail-modal", "className", allow_duplicate=True),
+    Output("followup-detail-body", "children", allow_duplicate=True),
+    Output("selected-followup", "data", allow_duplicate=True),
+    Output("closed-followup-detail-modal", "className", allow_duplicate=True),
+    Output("closed-followup-detail-body", "children", allow_duplicate=True),
+    Input("alerts-table", "active_cell"),
+    State("alerts-table", "data"),
+    State("alerts-tab", "data"),
+    State("prefs", "data"),
+    prevent_initial_call=True,
+)
+def open_alert_detail(active_cell, table_data, active_tab, prefs):
+    if not active_cell or active_cell.get("column_id") != "estudiante":
+        raise PreventUpdate
+    rows = table_data or []
+    row_index = active_cell.get("row")
+    if row_index is None or row_index < 0 or row_index >= len(rows):
+        raise PreventUpdate
+    student_id = rows[row_index].get("estudiante")
+    if not student_id:
+        raise PreventUpdate
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    records = read_followups()
+    status = followup_status(student_id, records)
+    latest = vigente_followup(student_id, records)
+    tab = active_tab or "all"
+
+    # Cerradas: se queda en Alertas y abre el detalle del seguimiento cerrado.
+    if tab == "closed" or status == "Cerrada":
+        if latest is None:
+            raise PreventUpdate
+        return (
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            "modal",
+            closed_followup_detail_modal(lang, latest),
+        )
+
+    # En seguimiento: navega a Seguimientos y abre el detalle del seguimiento.
+    if tab == "followup" or status == "En seguimiento":
+        if latest is None:
+            raise PreventUpdate
+        index = _followup_index(records, latest)
+        if index is None:
+            raise PreventUpdate
+        return (
+            "/seguimientos",
+            no_update,
+            no_update,
+            no_update,
+            "modal",
+            followup_detail_modal(lang, latest),
+            index,
+            no_update,
+            no_update,
+        )
+
+    # Nuevas (o Todas sin seguimiento activo): navega a Estudiantes y abre su detalle.
+    data = student_detail_data(student_id, lang)
+    if not data:
+        raise PreventUpdate
+    return (
+        "/estudiantes",
+        "modal",
+        student_detail_modal(lang, data),
+        student_id,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+    )
+
+
+@callback(
+    Output("closed-followup-detail-modal", "className", allow_duplicate=True),
+    Input("close-closed-followup-detail", "n_clicks"),
+    prevent_initial_call=True,
+)
+def close_closed_followup_detail(clicks):
+    if not clicks:
+        raise PreventUpdate
+    return "modal hidden"
+
+
+@callback(
+    Output("followup-close-modal", "className"),
+    Output("followup-close-body", "children"),
+    Output("close-followup", "data"),
+    Output("followups-version", "data", allow_duplicate=True),
+    Output("toast", "className", allow_duplicate=True),
+    Output("toast", "children", allow_duplicate=True),
+    Input({"type": "followup-close", "index": dash.ALL}, "n_clicks"),
+    Input("cancel-followup-close", "n_clicks"),
+    Input("confirm-followup-close", "n_clicks"),
+    State("close-followup", "data"),
+    State("prefs", "data"),
+    State("followups-version", "data"),
+    prevent_initial_call=True,
+)
+def manage_followup_close(table_clicks, cancel_clicks, confirm_clicks, close_index, prefs, version):
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    trigger = dash.ctx.triggered_id
+    if trigger == "cancel-followup-close":
+        return "modal hidden", no_update, None, no_update, no_update, no_update
+    if isinstance(trigger, dict) and trigger.get("type") == "followup-close":
+        index = trigger.get("index")
+        if not dash.ctx.triggered or not dash.ctx.triggered[0].get("value"):
+            raise PreventUpdate
+        records = read_followups()
+        if index is None or index < 0 or index >= len(records):
+            raise PreventUpdate
+        if records[index].get("estado") == "Cerrada":
+            raise PreventUpdate
+        return "modal", followup_close_modal(lang, records[index]), index, no_update, no_update, no_update
+    if trigger == "confirm-followup-close":
+        if not confirm_clicks or close_index is None:
+            raise PreventUpdate
+        try:
+            close_followup(close_index)
+        except Exception:
+            return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_close_error"))
+        return (
+            "modal hidden",
+            no_update,
+            None,
+            (version or 0) + 1,
+            *toast("success", tr(lang, "followups.msg_closed")),
+        )
+    raise PreventUpdate

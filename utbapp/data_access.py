@@ -65,6 +65,7 @@ def save_followup(student_id: str, period: str, responsible: str, note: str, nex
         "proxima_accion": next_action,
         "fecha_proxima_accion": next_date,
         "estado": status,
+        "report_updates": 0,
         "created_at": datetime.now().isoformat(timespec="seconds"),
     })
     _write_followups(records)
@@ -85,6 +86,7 @@ def create_followup_update(index: int, period: str, responsible: str, note: str,
         "proxima_accion": next_action,
         "fecha_proxima_accion": next_date,
         "estado": status,
+        "report_updates": int(previous.get("report_updates") or 0) + 1,
         "created_at": datetime.now().isoformat(timespec="seconds"),
     }
     records.append(record)
@@ -113,6 +115,20 @@ def update_followup(
     record["proxima_accion"] = next_action
     record["fecha_proxima_accion"] = next_date
     record["updated_at"] = datetime.now().isoformat(timespec="seconds")
+    _write_followups(records)
+    return record
+
+
+def close_followup(index: int) -> dict:
+    """Cierra el seguimiento indicado y guarda la fecha y hora de cierre."""
+    records = read_followups()
+    if index < 0 or index >= len(records):
+        raise IndexError("Seguimiento no encontrado")
+    record = records[index]
+    if record.get("estado") == "Cerrada":
+        raise ValueError("El seguimiento ya está cerrado")
+    record["estado"] = "Cerrada"
+    record["closed_at"] = datetime.now().isoformat(timespec="seconds")
     _write_followups(records)
     return record
 
@@ -157,8 +173,7 @@ def followup_status(student_id: str, records: list[dict] | None = None) -> str:
     matching = [r for r in records if r.get("estudiante_id") == student_id]
     if not matching:
         return "Sin acompañamiento"
-    if any(r.get("estado") == "En seguimiento" for r in matching):
-        return "En seguimiento"
-    if any(r.get("estado") == "Nueva" for r in matching):
-        return "Nueva"
-    return "Cerrada"
+    # El estado vigente es el del registro más reciente: así el cierre de un
+    # seguimiento se refleja de inmediato en Alertas, Estudiantes y Seguimientos.
+    latest = max(matching, key=lambda r: r.get("created_at") or "")
+    return latest.get("estado") or "Nueva"
