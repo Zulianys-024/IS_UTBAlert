@@ -8,3 +8,12 @@ __pycache__/
 .env
 .env.*
 !.env.example
+admins.local.json
+*credentials*
+*credenciales*
+
+# Local databases
+users.db
+users.db-*
+*.sqlite
+*.sqlite3

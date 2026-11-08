@@ -47,13 +47,47 @@ desde la terminal integrada:
 ```powershell
 python -m venv .venv
 & ".\.venv\Scripts\python.exe" -m pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+Edita `.env` y define como mínimo `SECRET_KEY` (puedes generarla con
+`python -c "import secrets; print(secrets.token_hex(32))"`), el dominio
+permitido (`ALLOWED_EMAIL_DOMAIN=utb.edu.co`) y deja `DEMO_MODE=false`.
+
+Crea en la raíz el archivo local `admins.local.json` con las cuentas
+administradoras iniciales. Este archivo no se versiona y sus contraseñas nunca
+deben compartirse ni subirse al repositorio. Ejemplo con datos falsos:
+
+```json
+[
+  {
+    "nombre": "Ana Pérez",
+    "correo": "ana.perez@utb.edu.co",
+    "password": "cambiar-esta-clave"
+  }
+]
+```
+
+Después crea las cuentas y arranca la aplicación:
+
+```powershell
+& ".\.venv\Scripts\python.exe" seed_admins.py
 & ".\.venv\Scripts\python.exe" run.py
 ```
 
-Después abre `http://localhost:8050`. El servidor queda disponible solo en este equipo y no requiere PostgreSQL para la demostración. La cuenta de demostración es:
+Abre `http://127.0.0.1:8050`. Solo pueden iniciar sesión los usuarios
+registrados con correo `@utb.edu.co` y contraseña válida. En el primer ingreso
+la aplicación pide definir una contraseña nueva. `users.db`, `.env` y
+`admins.local.json` están excluidos de Git.
 
-* Usuario: `camila`
-* Contraseña: `demo`
+Para administrar cuentas después del alta inicial:
+
+```powershell
+& ".\.venv\Scripts\python.exe" crear_admin.py
+& ".\.venv\Scripts\python.exe" crear_admin.py --cambiar-password correo@utb.edu.co
+& ".\.venv\Scripts\python.exe" crear_admin.py --desactivar correo@utb.edu.co
+& ".\.venv\Scripts\python.exe" crear_admin.py --listar
+```
 
 La aplicación carga por defecto `data/processed/estudiantes_utb_sinteticos.csv` y `data/processed/historial_academico_utb_sintetico.csv`. Puede ejecutarse sin credenciales de PostgreSQL; `DATABASE_URL` continúa reservado para el cargador existente.
 

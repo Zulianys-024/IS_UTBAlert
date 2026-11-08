@@ -3,8 +3,11 @@ from __future__ import annotations
 import calendar
 import io
 import json
+import os
+import secrets
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from pathlib import Path
 from urllib.parse import quote
 
 import dash
@@ -13,7 +16,21 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, State, callback, dash_table, dcc, html, no_update
 from dash.exceptions import PreventUpdate
+from flask import has_request_context, redirect, request, session as flask_session
 
+from utbapp.auth import (
+    PERMANENT_SESSION_DAYS,
+    authenticate,
+    change_password_after_login,
+    clear_failures,
+    get_user_by_id,
+    init_db,
+    lockout_seconds,
+    normalize_email,
+    record_login,
+    register_failure,
+    update_name,
+)
 from utbapp.data_access import (
     create_followup_update,
     delete_followup,
@@ -40,6 +57,15 @@ from utbapp.i18n import (
 
 app = Dash(__name__, suppress_callback_exceptions=True, title="Alertas Tempranas · UTB", assets_folder="assets")
 server = app.server
+server.secret_key = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+server.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=False,
+    PERMANENT_SESSION_LIFETIME=timedelta(days=PERMANENT_SESSION_DAYS),
+)
+init_db()
+DEMO_MODE = os.getenv("DEMO_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
 students, history, _ = load_data()
 
 @server.route("/manus-routes.json")
@@ -69,9 +95,100 @@ NAV = [
     ("nav.reports", "/reportes", "▥"),
 ]
 DEFAULT_PREFS = {"lang": "es", "theme": "light"}
-DEFAULT_PROFILE = {"name": "Camila", "email": "camila@utb.edu.co", "role": "admin", "description": ""}
+DEFAULT_PROFILE = {"name": "", "email": "", "role": "admin", "description": ""}
 FOLLOWUP_MAX_MONTHS = 6
-DEMO_SESSION = {"user": "Camila", "role": "admin"}
+DEMO_SESSION = {
+    "user": "Camila",
+    "name": "Camila",
+    "email": "demo@utb.edu.co",
+    "role": "admin",
+    "user_id": "demo",
+    "must_change": False,
+}
+DASHBOARD_PATHS = {
+    "/estudiantes",
+    "/variables",
+    "/alertas",
+    "/seguimientos",
+    "/reportes",
+    "/perfil",
+    "/perfil/editar",
+}
+
+
+def auth_payload(user: dict) -> dict:
+    return {
+        "user": user["nombre"],
+        "name": user["nombre"],
+        "email": user["correo"],
+        "role": user["rol"],
+        "user_id": user["id"],
+        "must_change": bool(user["debe_cambiar_password"]),
+    }
+
+
+def current_user() -> dict | None:
+    """Usuario de la sesión Flask (fuente de verdad en cada petición)."""
+    if not has_request_context():
+        return None
+    if flask_session.get("demo") and DEMO_MODE:
+        return {
+            "id": "demo",
+            "nombre": DEMO_SESSION["name"],
+            "correo": DEMO_SESSION["email"],
+            "rol": "admin",
+            "activo": True,
+            "debe_cambiar_password": False,
+        }
+    user = get_user_by_id(flask_session.get("user_id"))
+    if not user or not user["activo"]:
+        flask_session.clear()
+        return None
+    return user
+
+
+@server.before_request
+def protect_dashboard_routes():
+    """Redirige al login al abrir una ruta del dashboard sin sesión."""
+    if request.method != "GET":
+        return None
+    path = request.path
+    if path.startswith("/assets/") or path.startswith("/_dash") or path.startswith("/manus-routes"):
+        return None
+    if path in DASHBOARD_PATHS and current_user() is None:
+        return redirect("/")
+    return None
+
+
+@server.get("/cambiar-password")
+def cambiar_password_form():
+    return redirect("/")
+
+
+@server.post("/cambiar-password")
+def cambiar_password():
+    """Cambio obligatorio de contraseña mediante formulario clásico."""
+    user = current_user()
+    if not user:
+        return redirect("/")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+    if new_password != confirm_password:
+        flask_session["password_error"] = "Las contraseñas no coinciden."
+        return redirect("/")
+    try:
+        change_password_after_login(user["id"], new_password)
+    except ValueError as exc:
+        flask_session["password_error"] = str(exc)
+        return redirect("/")
+    flask_session.pop("password_error", None)
+    return redirect("/")
+
+
+@server.get("/logout")
+def logout_route():
+    flask_session.clear()
+    return redirect("/")
 
 ICON_PATHS = {
     "user": '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -1910,7 +2027,7 @@ def login_page(lang):
                                             dcc.Input(
                                                 id="login-user",
                                                 type="text",
-                                                value="bienestar@utb.edu.co",
+                                                value="",
                                                 placeholder="usuario@utb.edu.co",
                                                 className="login-input login-user-input",
                                                 autoComplete="username",
@@ -1921,7 +2038,7 @@ def login_page(lang):
                                                     dcc.Input(
                                                         id="login-pass",
                                                         type="password",
-                                                        value="demo",
+                                                        value="",
                                                         placeholder="••••••••",
                                                         className="login-input",
                                                         autoComplete="current-password",
@@ -1961,12 +2078,18 @@ def login_page(lang):
                                                 type="button",
                                                 n_clicks=0,
                                             ),
-                                            html.Div(
+                                            *(
                                                 [
-                                                    html.Span("i", className="login-note-icon"),
-                                                    html.Span(tr(lang, "login.demo_note")),
-                                                ],
-                                                className="login-note",
+                                                    html.Div(
+                                                        [
+                                                            html.Span("i", className="login-note-icon"),
+                                                            html.Span(tr(lang, "login.demo_note")),
+                                                        ],
+                                                        className="login-note",
+                                                    )
+                                                ]
+                                                if DEMO_MODE
+                                                else []
                                             ),
                                             html.Div(id="login-error", className="login-error"),
                                             html.Div(
@@ -1978,12 +2101,18 @@ def login_page(lang):
                                                 ],
                                                 className="login-help",
                                             ),
-                                            html.Button(
-                                                [tr(lang, "login.demo_link"), html.Span("→", className="login-demo-arrow")],
-                                                id="login-demo",
-                                                className="login-demo",
-                                                type="button",
-                                                n_clicks=0,
+                                            *(
+                                                [
+                                                    html.Button(
+                                                        [tr(lang, "login.demo_link"), html.Span("→", className="login-demo-arrow")],
+                                                        id="login-demo",
+                                                        className="login-demo",
+                                                        type="button",
+                                                        n_clicks=0,
+                                                    )
+                                                ]
+                                                if DEMO_MODE
+                                                else []
                                             ),
                                         ],
                                         className="login-form",
@@ -2007,6 +2136,72 @@ def login_page(lang):
             menu_anchors(),
         ],
         className="login-page",
+    )
+
+
+def password_change_page(lang, user):
+    name = user.get("name") or user.get("user") or ""
+    error = flask_session.pop("password_error", "") if has_request_context() else ""
+    return html.Div(
+        html.Div(
+            html.Div(
+                [
+                    html.Div(tr(lang, "password.eyebrow"), className="login-eyebrow"),
+                    html.H1(tr(lang, "password.title"), className="login-title"),
+                    html.P(
+                        tr(lang, "password.subtitle", name=name),
+                        className="login-subtitle",
+                    ),
+                    html.Form(
+                        [
+                            html.Label(tr(lang, "password.new"), htmlFor="new-password", className="login-label"),
+                            dcc.Input(
+                                id="new-password",
+                                type="password",
+                                name="new_password",
+                                placeholder="••••••••",
+                                className="login-input",
+                                autoComplete="new-password",
+                                required=True,
+                                minLength=8,
+                            ),
+                            html.Label(
+                                tr(lang, "password.confirm"),
+                                htmlFor="new-password-confirm",
+                                className="login-label",
+                            ),
+                            dcc.Input(
+                                id="new-password-confirm",
+                                type="password",
+                                name="confirm_password",
+                                placeholder="••••••••",
+                                className="login-input",
+                                autoComplete="new-password",
+                                required=True,
+                                minLength=8,
+                            ),
+                            html.Button(
+                                tr(lang, "password.submit"),
+                                className="login-submit",
+                                type="submit",
+                            ),
+                            html.Div(error, className="login-error"),
+                            html.A(
+                                tr(lang, "password.logout"),
+                                href="/logout",
+                                className="login-demo",
+                            ),
+                        ],
+                        action="/cambiar-password",
+                        method="post",
+                        className="password-change-fields",
+                    ),
+                ],
+                className="password-change-form",
+            ),
+            className="login-card password-change-card",
+        ),
+        className="login-page password-change-page",
     )
 
 
@@ -2180,8 +2375,22 @@ def render(path, auth, values, prefs, profile, demo_dismissed, followups_version
     lang = prefs["lang"]
     dark = prefs["theme"] == "dark"
     profile = {**DEFAULT_PROFILE, **(profile or {})}
+    if has_request_context():
+        user = current_user()
+        if user is None:
+            auth = None
+        else:
+            auth = auth_payload(user)
+            profile = {
+                **profile,
+                "name": user["nombre"],
+                "email": user["correo"],
+                "role": user["rol"],
+            }
     if not auth:
         return login_page(lang)
+    if auth.get("must_change"):
+        return password_change_page(lang, auth)
     path = path or "/"
     dismissed_demo = bool(demo_dismissed)
     if path == "/estudiantes":
@@ -2201,27 +2410,80 @@ def render(path, auth, values, prefs, profile, demo_dismissed, followups_version
     return shell(path, content, lang, dark, profile)
 
 
+LOGIN_INPUTS = [
+    Input("login-button", "n_clicks"),
+    Input("login-user", "n_submit"),
+    Input("login-pass", "n_submit"),
+]
+if DEMO_MODE:
+    LOGIN_INPUTS.append(Input("login-demo", "n_clicks"))
+
+
 @callback(
     Output("auth", "data"),
     Output("login-error", "children"),
-    Input("login-button", "n_clicks"),
-    Input("login-demo", "n_clicks"),
-    Input("login-user", "n_submit"),
-    Input("login-pass", "n_submit"),
+    Output("profile", "data"),
+    *LOGIN_INPUTS,
     State("login-user", "value"),
     State("login-pass", "value"),
+    State("login-remember", "value"),
     State("prefs", "data"),
     prevent_initial_call=True,
 )
-def do_login(_, demo_clicks, user_submit, pass_submit, user, password, prefs):
-    if not any([demo_clicks, user_submit, pass_submit, _]):
+def do_login(*args):
+    trigger_values = list(args[: len(LOGIN_INPUTS)])
+    user, password, remember, prefs = args[len(LOGIN_INPUTS) :]
+    button_clicks, user_submit, pass_submit = trigger_values[:3]
+    demo_clicks = trigger_values[3] if DEMO_MODE else 0
+    if not any(trigger_values):
         raise PreventUpdate
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
-    if dash.ctx.triggered_id == "login-demo":
-        return DEMO_SESSION, ""
+
+    if demo_clicks and dash.ctx.triggered_id == "login-demo":
+        if not DEMO_MODE:
+            raise PreventUpdate
+        flask_session.clear()
+        flask_session["demo"] = True
+        flask_session.permanent = False
+        return (
+            DEMO_SESSION,
+            "",
+            {**DEFAULT_PROFILE, "name": DEMO_SESSION["name"], "email": DEMO_SESSION["email"]},
+        )
+
     if not (user or "").strip() or not (password or "").strip():
-        return no_update, tr(lang, "login.error")
-    return DEMO_SESSION, ""
+        return no_update, tr(lang, "login.error"), no_update
+
+    correo = normalize_email(user)
+    ip = request.remote_addr if has_request_context() else ""
+    remaining = lockout_seconds(correo, ip)
+    if remaining:
+        minutes = max(1, (remaining + 59) // 60)
+        return no_update, tr(lang, "login.locked", minutes=minutes), no_update
+
+    account = authenticate(correo, password)
+    if not account:
+        seconds = register_failure(correo, ip)
+        if seconds:
+            minutes = max(1, (seconds + 59) // 60)
+            return no_update, tr(lang, "login.locked", minutes=minutes), no_update
+        return no_update, tr(lang, "login.invalid"), no_update
+
+    clear_failures(correo, ip)
+    account = record_login(account["id"]) or account
+    flask_session.clear()
+    flask_session["user_id"] = account["id"]
+    flask_session.permanent = bool(remember)
+    return (
+        auth_payload(account),
+        "",
+        {
+            **DEFAULT_PROFILE,
+            "name": account["nombre"],
+            "email": account["correo"],
+            "role": account["rol"],
+        },
+    )
 
 
 @callback(
@@ -2303,17 +2565,19 @@ def render_menu(is_open):
 @callback(
     Output("auth", "data", allow_duplicate=True),
     Output("url", "pathname", allow_duplicate=True),
+    Output("profile", "data", allow_duplicate=True),
     Input("menu-logout", "n_clicks"),
     prevent_initial_call=True,
 )
 def logout(_):
     if not _:
         raise PreventUpdate
-    return None, "/"
+    flask_session.clear()
+    return None, "/", DEFAULT_PROFILE
 
 
 @callback(
-    Output("profile", "data"),
+    Output("profile", "data", allow_duplicate=True),
     Output("url", "pathname", allow_duplicate=True),
     Output("profile-message", "children"),
     Input("profile-save", "n_clicks"),
@@ -2337,6 +2601,20 @@ def save_profile(_, name, email, description, profile, prefs):
         "email": email.strip(),
         "description": (description or "").strip(),
     }
+    if has_request_context():
+        user = current_user()
+        if not user:
+            return no_update, no_update, tr(lang, "password.session")
+        try:
+            changed = update_name(user["id"], name)
+        except ValueError as exc:
+            return no_update, no_update, str(exc)
+        updated = {
+            **updated,
+            "name": changed["nombre"],
+            "email": changed["correo"],
+            "role": changed["rol"],
+        }
     return updated, "/perfil", ""
 
 
