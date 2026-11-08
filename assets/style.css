@@ -30,7 +30,10 @@
 .login-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);height:34px;width:34px;border:0;background:transparent;border-radius:6px;color:#98A2B3;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .login-eye:hover{color:var(--blue);background:#F2F5FF}
 .login-eye.visible{color:var(--blue)}
+.login-eye:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .login-eye-svg{display:flex;align-items:center;justify-content:center;line-height:0}
+.login-eye-svg svg{display:block;width:18px;height:18px;pointer-events:none}
+.login-pass-wrap input::-ms-reveal,.login-pass-wrap input::-ms-clear{display:none}
 .login-options{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 20px}
 .login-remember{font-size:11.5px;color:#5B6576}
 .login-remember label{display:flex!important;align-items:center;gap:7px;cursor:pointer;margin:0!important;font-weight:500}

@@ -266,6 +266,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "login.legal": "Política de tratamiento de datos",
         "login.product": "UTBAlert",
         "login.show_password": "Mostrar contraseña",
+        "login.hide_password": "Ocultar contraseña",
     },
     "en": {
         "nav.home": "Home",
@@ -515,6 +516,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "login.legal": "Data processing policy",
         "login.product": "UTBAlert",
         "login.show_password": "Show password",
+        "login.hide_password": "Hide password",
     },
 }
 

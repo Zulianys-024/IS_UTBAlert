@@ -229,6 +229,10 @@ body:has(.login-page) {
   padding: 0 13px;
 }
 
+.login-card .login-pass-wrap .login-input {
+  padding-right: 48px;
+}
+
 .login-card .login-user-input,
 .login-card .login-pass-wrap {
   margin-bottom: clamp(8px, 1.5vh, 18px);

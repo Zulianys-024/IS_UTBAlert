@@ -1973,18 +1973,6 @@ def profile_edit_page(lang, dark, profile):
 # === LOGIN ===
 
 
-def eye_icon(open_eye=True, color="#98A2B3"):
-    if open_eye:
-        inner = '<path d="M2.2 12S5.8 5.8 12 5.8 21.8 12 21.8 12 18.2 18.2 12 18.2 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="3.1"/>'
-    else:
-        inner = '<path d="M3 3l18 18"/><path d="M10.4 6.1A10.6 10.6 0 0 1 12 6c6.2 0 9.8 6 9.8 6a17.9 17.9 0 0 1-3.3 3.9M6.6 7.9A18.4 18.4 0 0 0 2.2 12s3.6 6 9.8 6a9.9 9.9 0 0 0 3.4-.6"/>'
-    svg = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" '
-        f'fill="none" stroke="{color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">{inner}</svg>'
-    )
-    return html.Img(src="data:image/svg+xml;utf8," + quote(svg), className="login-eye-svg", alt="")
-
-
 def login_page(lang):
     return html.Div(
         [
@@ -2051,13 +2039,21 @@ def login_page(lang):
                                                         autoComplete="current-password",
                                                     ),
                                                     html.Button(
-                                                        eye_icon(),
+                                                        html.Span(
+                                                            className="login-eye-svg",
+                                                            **{"aria-hidden": "true"},
+                                                        ),
                                                         id="login-toggle-pass",
                                                         className="login-eye",
                                                         type="button",
                                                         title=tr(lang, "login.show_password"),
-                                                        n_clicks=0,
-                                                        **{"aria-label": tr(lang, "login.show_password")},
+                                                        **{
+                                                            "aria-label": tr(lang, "login.show_password"),
+                                                            "aria-controls": "login-pass",
+                                                            "aria-pressed": "false",
+                                                            "data-label-show": tr(lang, "login.show_password"),
+                                                            "data-label-hide": tr(lang, "login.hide_password"),
+                                                        },
                                                     ),
                                                 ],
                                                 className="login-pass-wrap",
@@ -2492,24 +2488,6 @@ def do_login(*args):
             "role": account["rol"],
             "genero": account.get("genero") or "",
         },
-    )
-
-
-@callback(
-    Output("login-pass", "type"),
-    Output("login-toggle-pass", "className"),
-    Output("login-toggle-pass", "children"),
-    Input("login-toggle-pass", "n_clicks"),
-    prevent_initial_call=True,
-)
-def toggle_password_visibility(clicks):
-    if not clicks:
-        raise PreventUpdate
-    visible = clicks % 2 == 1
-    return (
-        "text" if visible else "password",
-        "login-eye visible" if visible else "login-eye",
-        eye_icon(not visible, "#153DDA" if visible else "#98A2B3"),
     )
 
 
