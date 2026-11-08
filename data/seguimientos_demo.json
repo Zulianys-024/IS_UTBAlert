@@ -52,5 +52,16 @@
     "estado": "Cerrada",
     "created_at": "2026-11-07T18:33:35",
     "closed_at": "2026-11-07T21:06:05"
+  },
+  {
+    "estudiante_id": "T00011226",
+    "periodo": "202601",
+    "responsable": "Camila",
+    "nota": "nota de prueba 2",
+    "proxima_accion": "prueba ",
+    "fecha_proxima_accion": "2026-11-19",
+    "estado": "Nueva",
+    "created_at": "2026-11-07T23:25:48",
+    "updated_at": "2026-11-07T23:25:59"
   }
 ]
