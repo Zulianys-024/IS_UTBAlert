@@ -23,6 +23,7 @@ from utbapp.auth import (
     authenticate,
     change_password_after_login,
     clear_failures,
+    etiqueta_rol,
     get_user_by_id,
     init_db,
     lockout_seconds,
@@ -95,13 +96,14 @@ NAV = [
     ("nav.reports", "/reportes", "▥"),
 ]
 DEFAULT_PREFS = {"lang": "es", "theme": "light"}
-DEFAULT_PROFILE = {"name": "", "email": "", "role": "admin", "description": ""}
+DEFAULT_PROFILE = {"name": "", "email": "", "role": "admin", "genero": "", "description": ""}
 FOLLOWUP_MAX_MONTHS = 6
 DEMO_SESSION = {
     "user": "Camila",
     "name": "Camila",
     "email": "demo@utb.edu.co",
     "role": "admin",
+    "genero": "F",
     "user_id": "demo",
     "must_change": False,
 }
@@ -122,6 +124,7 @@ def auth_payload(user: dict) -> dict:
         "name": user["nombre"],
         "email": user["correo"],
         "role": user["rol"],
+        "genero": user.get("genero") or "",
         "user_id": user["id"],
         "must_change": bool(user["debe_cambiar_password"]),
     }
@@ -137,6 +140,7 @@ def current_user() -> dict | None:
             "nombre": DEMO_SESSION["name"],
             "correo": DEMO_SESSION["email"],
             "rol": "admin",
+            "genero": DEMO_SESSION["genero"],
             "activo": True,
             "debe_cambiar_password": False,
         }
@@ -332,7 +336,7 @@ def user_menu(lang, dark, profile):
     ink = "#A9B7CC" if dark else "#5B6576"
     accent = "#7FA6FF" if dark else "#153DDA"
     name = profile.get("name") or "Camila"
-    role = tr(lang, "role.admin")
+    role = etiqueta_rol(profile.get("role"), profile.get("genero"), lang)
     theme_key = "menu.dark" if dark else "menu.light"
     return html.Div(
         [
@@ -1861,7 +1865,10 @@ def profile_page(lang, dark, profile):
                         html.Div(
                             [
                                 html.Div(name, className="profile-name"),
-                                html.Div(tr(lang, "role.admin"), className="profile-role"),
+                                html.Div(
+                                    etiqueta_rol(profile.get("role"), profile.get("genero"), lang),
+                                    className="profile-role",
+                                ),
                                 html.Div(profile.get("email") or "", className="profile-email"),
                             ],
                             className="profile-identity",
@@ -1878,7 +1885,7 @@ def profile_page(lang, dark, profile):
                     [
                         detail(tr(lang, "profile.name"), name),
                         detail(tr(lang, "profile.email"), profile.get("email")),
-                        detail(tr(lang, "profile.role"), tr(lang, "role.admin")),
+                        detail(tr(lang, "profile.role"), etiqueta_rol(profile.get("role"), profile.get("genero"), lang)),
                         detail(tr(lang, "profile.description"), description),
                     ],
                     className="profile-details",
@@ -1933,7 +1940,7 @@ def profile_edit_page(lang, dark, profile):
                                 html.Label(tr(lang, "profile.role"), htmlFor="profile-role", className="login-label"),
                                 dcc.Input(
                                     id="profile-role",
-                                    value=tr(lang, "role.admin"),
+                                    value=etiqueta_rol(profile.get("role"), profile.get("genero"), lang),
                                     disabled=True,
                                     className="login-input profile-input profile-input-disabled",
                                 ),
@@ -2386,6 +2393,7 @@ def render(path, auth, values, prefs, profile, demo_dismissed, followups_version
                 "name": user["nombre"],
                 "email": user["correo"],
                 "role": user["rol"],
+                "genero": user.get("genero") or "",
             }
     if not auth:
         return login_page(lang)
@@ -2482,6 +2490,7 @@ def do_login(*args):
             "name": account["nombre"],
             "email": account["correo"],
             "role": account["rol"],
+            "genero": account.get("genero") or "",
         },
     )
 
@@ -2614,6 +2623,7 @@ def save_profile(_, name, email, description, profile, prefs):
             "name": changed["nombre"],
             "email": changed["correo"],
             "role": changed["rol"],
+            "genero": changed.get("genero") or "",
         }
     return updated, "/perfil", ""
 

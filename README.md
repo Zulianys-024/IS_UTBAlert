@@ -63,11 +63,14 @@ deben compartirse ni subirse al repositorio. Ejemplo con datos falsos:
   {
     "nombre": "Ana Pérez",
     "correo": "ana.perez@utb.edu.co",
-    "password": "cambiar-esta-clave"
+    "password": "cambiar-esta-clave",
+    "genero": "F"
   }
 ]
 ```
 
+El campo `genero` acepta `M` o `F` y define si el rol se muestra como
+`Administrador` o `Administradora` (sin género se muestra `Administrador/a`).
 Después crea las cuentas y arranca la aplicación:
 
 ```powershell

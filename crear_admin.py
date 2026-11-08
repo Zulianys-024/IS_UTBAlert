@@ -23,6 +23,7 @@ from utbapp.auth import (
     init_db,
     list_users,
     normalize_email,
+    normalize_gender,
     set_active,
     set_password,
     validate_email,
@@ -45,6 +46,17 @@ def ask_password(label: str = "Contraseña") -> str:
         return first
 
 
+def ask_gender() -> str | None:
+    while True:
+        raw = input("Género (M/F, opcional): ").strip()
+        if not raw:
+            return None
+        genero = normalize_gender(raw)
+        if genero:
+            return genero
+        print("  Usa M o F (o deja vacío para no definirlo).")
+
+
 def add_admin() -> int:
     print(f"Alta de administrador · dominio @{ALLOWED_EMAIL_DOMAIN}")
     nombre = input("Nombre completo: ").strip()
@@ -57,8 +69,16 @@ def add_admin() -> int:
     except ValueError as exc:
         print(f"Error: {exc}")
         return 1
+    genero = ask_gender()
     password = ask_password()
-    status, user = create_admin(nombre, correo, password, rol="admin", debe_cambiar_password=True)
+    status, user = create_admin(
+        nombre,
+        correo,
+        password,
+        rol="admin",
+        debe_cambiar_password=True,
+        genero=genero,
+    )
     if status == "created":
         print(f"[creado] {user['nombre']} <{user['correo']}> · deberá cambiar la contraseña al entrar")
     else:

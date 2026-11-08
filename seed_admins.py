@@ -20,6 +20,7 @@ from utbapp.auth import (
     create_admin,
     init_db,
     normalize_email,
+    normalize_gender,
     validate_email,
     validate_password,
 )
@@ -54,16 +55,23 @@ def validate_records(records: list[dict]) -> list[dict]:
         nombre = str(record.get("nombre") or "").strip()
         correo = normalize_email(record.get("correo"))
         password = record.get("password") or ""
+        genero_raw = record.get("genero")
         label = f"Registro {index} ({correo or 'sin correo'})"
         try:
             if not nombre:
                 raise ValueError("falta el nombre")
             validate_email(correo)
             validate_password(password)
+            if genero_raw in (None, ""):
+                genero = None
+            else:
+                genero = normalize_gender(genero_raw)
+                if not genero:
+                    raise ValueError("género inválido (usa M o F)")
         except ValueError as exc:
             errors.append(f"{label}: {exc}")
             continue
-        valid.append({"nombre": nombre, "correo": correo, "password": password})
+        valid.append({"nombre": nombre, "correo": correo, "password": password, "genero": genero})
     if errors:
         raise ValueError("\n".join(errors))
     return valid
@@ -93,6 +101,7 @@ def main() -> int:
             record["password"],
             rol="admin",
             debe_cambiar_password=True,
+            genero=record["genero"],
         )
         if status == "created":
             created += 1

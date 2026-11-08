@@ -17,6 +17,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from utbapp.i18n import tr
+
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
 
@@ -51,6 +53,28 @@ def validate_password(value: str | None) -> str:
     return password
 
 
+def normalize_gender(value: str | None) -> str | None:
+    """Normaliza el género a ``"M"``/``"F"``; devuelve ``None`` si no está definido."""
+    genero = (value or "").strip().upper()
+    if genero in {"M", "MASCULINO", "HOMBRE"}:
+        return "M"
+    if genero in {"F", "FEMENINO", "MUJER"}:
+        return "F"
+    return None
+
+
+def etiqueta_rol(rol: str | None, genero: str | None, lang: str = "es") -> str:
+    """Etiqueta del rol según género; usado en cabecera, menú y perfil."""
+    if (rol or "").strip().lower() == "admin":
+        genero = normalize_gender(genero)
+        if genero == "M":
+            return tr(lang, "role.admin_m")
+        if genero == "F":
+            return tr(lang, "role.admin_f")
+        return tr(lang, "role.admin_neutral")
+    return (rol or "").strip().capitalize() or tr(lang, "role.admin_neutral")
+
+
 def _connect() -> sqlite3.Connection:
     USERS_DB.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(USERS_DB, timeout=10)
@@ -68,6 +92,7 @@ def init_db() -> None:
                 correo TEXT NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
                 rol TEXT NOT NULL DEFAULT 'admin',
+                genero TEXT,
                 activo INTEGER NOT NULL DEFAULT 1,
                 debe_cambiar_password INTEGER NOT NULL DEFAULT 1,
                 creado_en TEXT NOT NULL,
@@ -76,6 +101,9 @@ def init_db() -> None:
             """
         )
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_correo ON usuarios (correo)")
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(usuarios)")}
+        if "genero" not in columns:
+            conn.execute("ALTER TABLE usuarios ADD COLUMN genero TEXT")
 
 
 def _row_to_dict(row: sqlite3.Row | None) -> dict | None:
@@ -118,8 +146,9 @@ def create_admin(
     password: str | None,
     rol: str = "admin",
     debe_cambiar_password: bool = True,
+    genero: str | None = None,
 ) -> tuple[str, dict]:
-    """Crea un administrador o actualiza solo su nombre si el correo ya existe.
+    """Crea un administrador o actualiza nombre/género si el correo ya existe.
 
     Nunca sobrescribe la contraseña de una cuenta existente. Devuelve
     ``("created"|"existing"|"updated", usuario)``.
@@ -127,6 +156,7 @@ def create_admin(
     nombre = (nombre or "").strip()
     correo = validate_email(correo)
     password = validate_password(password)
+    genero = normalize_gender(genero)
     if not nombre:
         raise ValueError("El nombre es obligatorio.")
 
@@ -134,18 +164,25 @@ def create_admin(
     existing = get_user_by_email(correo)
     with _connect() as conn:
         if existing:
-            conn.execute("UPDATE usuarios SET nombre = ? WHERE id = ?", (nombre, existing["id"]))
+            if genero:
+                conn.execute(
+                    "UPDATE usuarios SET nombre = ?, genero = ? WHERE id = ?",
+                    (nombre, genero, existing["id"]),
+                )
+            else:
+                conn.execute("UPDATE usuarios SET nombre = ? WHERE id = ?", (nombre, existing["id"]))
             return "updated", get_user_by_id(existing["id"])
         conn.execute(
             """
-            INSERT INTO usuarios (nombre, correo, password_hash, rol, activo, debe_cambiar_password, creado_en)
-            VALUES (?, ?, ?, ?, 1, ?, ?)
+            INSERT INTO usuarios (nombre, correo, password_hash, rol, genero, activo, debe_cambiar_password, creado_en)
+            VALUES (?, ?, ?, ?, ?, 1, ?, ?)
             """,
             (
                 nombre,
                 correo,
                 generate_password_hash(password),
                 rol,
+                genero,
                 int(bool(debe_cambiar_password)),
                 datetime.now().isoformat(timespec="seconds"),
             ),
