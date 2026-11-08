@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import calendar
+import base64
 import io
 import json
 import os
@@ -16,7 +17,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, State, callback, dash_table, dcc, html, no_update
 from dash.exceptions import PreventUpdate
-from flask import has_request_context, redirect, request, session as flask_session
+from flask import abort, has_request_context, redirect, request, send_from_directory, session as flask_session
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from utbapp.auth import (
     PERMANENT_SESSION_DAYS,
@@ -31,6 +33,7 @@ from utbapp.auth import (
     record_login,
     register_failure,
     update_name,
+    update_photo,
 )
 from utbapp.data_access import (
     create_followup_update,
@@ -64,10 +67,25 @@ server.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=False,
     PERMANENT_SESSION_LIFETIME=timedelta(days=PERMANENT_SESSION_DAYS),
+    MAX_CONTENT_LENGTH=6 * 1024 * 1024,
 )
+AVATARS_DIR = Path(__file__).resolve().parent / "uploads" / "avatars"
+AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
+AVATAR_SIZE = (256, 256)
+AVATAR_FORMATS = {"PNG", "JPEG", "WEBP"}
 init_db()
 DEMO_MODE = os.getenv("DEMO_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
 students, history, _ = load_data()
+
+@server.get("/avatars/<path:filename>")
+def avatar_file(filename):
+    """Sirve únicamente las fotos generadas por la app."""
+    stem, _, suffix = filename.rpartition(".")
+    if not stem.isdigit() or suffix != "jpg":
+        abort(404)
+    return send_from_directory(AVATARS_DIR, filename, max_age=31536000)
+
 
 @server.route("/manus-routes.json")
 def manus_routes():
@@ -231,6 +249,86 @@ def initials(name):
     return (parts[0][0] + parts[1][0]).upper()
 
 
+def photo_src(foto, version=None):
+    """URL pública de la foto con cache-busting por fecha del archivo."""
+    if not foto:
+        return None
+    name = Path(str(foto)).name
+    if not name:
+        return None
+    path = AVATARS_DIR / name
+    if version is None:
+        try:
+            version = int(path.stat().st_mtime)
+        except OSError:
+            return None
+    return f"/avatars/{name}?v={version}"
+
+
+def avatar_node(name, foto, class_name):
+    """Avatar circular: foto si existe, iniciales como respaldo."""
+    src = photo_src(foto)
+    if src:
+        return html.Img(src=src, alt=name or "", className=f"{class_name} avatar-photo")
+    return html.Div(initials(name), className=class_name)
+
+
+def _decode_avatar(contents):
+    """Decodifica el data URL de dcc.Upload y valida tamaño y formato real."""
+    if not isinstance(contents, str) or "," not in contents:
+        raise ValueError("invalid")
+    header, encoded = contents.split(",", 1)
+    if not header.startswith("data:image/"):
+        raise ValueError("invalid")
+    try:
+        raw = base64.b64decode(encoded, validate=True)
+    except (ValueError, TypeError):
+        raise ValueError("invalid")
+    if len(raw) > AVATAR_MAX_BYTES:
+        raise ValueError("too_large")
+    try:
+        with Image.open(io.BytesIO(raw)) as probe:
+            if probe.format not in AVATAR_FORMATS:
+                raise ValueError("format")
+            probe.verify()
+        with Image.open(io.BytesIO(raw)) as image:
+            image = ImageOps.exif_transpose(image)
+            if image.mode in {"RGBA", "LA"} or (image.mode == "P" and "transparency" in image.info):
+                rgba = image.convert("RGBA")
+                background = Image.new("RGB", rgba.size, (255, 255, 255))
+                background.paste(rgba, mask=rgba.split()[-1])
+                image = background
+            else:
+                image = image.convert("RGB")
+            return ImageOps.fit(image, AVATAR_SIZE, method=Image.LANCZOS, centering=(0.5, 0.5))
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+        raise ValueError("invalid")
+
+
+def save_avatar(user_id, contents):
+    """Procesa y guarda la foto como uploads/avatars/<id>.jpg."""
+    image = _decode_avatar(contents)
+    filename = f"{int(user_id)}.jpg"
+    target = AVATARS_DIR / filename
+    temporary = AVATARS_DIR / f".{int(user_id)}.tmp"
+    image.save(temporary, format="JPEG", quality=88, optimize=True)
+    os.replace(temporary, target)
+    return filename
+
+
+def remove_avatar(foto):
+    """Borra el archivo de foto generado por la app (nunca rutas externas)."""
+    if not foto:
+        return
+    name = Path(str(foto)).name
+    if not name or not name.endswith(".jpg") or not name[:-4].isdigit():
+        return
+    try:
+        (AVATARS_DIR / name).unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 def icon_box(text, tone="blue"):
     return html.Div(text, className=f"icon-box {tone}")
 
@@ -342,7 +440,7 @@ def user_menu(lang, dark, profile):
         [
             html.Button(
                 [
-                    html.Span(initials(name), className="avatar top-avatar"),
+                    avatar_node(name, profile.get("foto"), "avatar top-avatar"),
                     html.Span(
                         [html.B(name), html.Small(role)],
                         className="user-copy",
@@ -1839,7 +1937,7 @@ def reports_page(values, lang, dark, dismissed_demo=False):
     ]
 
 
-def profile_page(lang, dark, profile):
+def profile_page(lang, dark, profile, flash=""):
     name = profile.get("name") or "Camila"
     description = profile.get("description") or ""
 
@@ -1853,6 +1951,7 @@ def profile_page(lang, dark, profile):
 
     return [
         page_heading(lang, tr(lang, "profile.title"), tr(lang, "profile.subtitle")),
+        *([html.Div(flash, className="form-message profile-flash")] if flash else []),
         html.Div(
             [
                 html.Div(
@@ -1861,7 +1960,7 @@ def profile_page(lang, dark, profile):
                 ),
                 html.Div(
                     [
-                        html.Div(initials(name), className="profile-avatar"),
+                        avatar_node(name, profile.get("foto"), "profile-avatar"),
                         html.Div(
                             [
                                 html.Div(name, className="profile-name"),
@@ -1919,11 +2018,36 @@ def profile_edit_page(lang, dark, profile):
                     [
                         html.Div(
                             [
-                                html.Div(initials(name), className="profile-avatar large"),
-                                html.Span(
-                                    [icon("camera", accent, 15), html.Span(tr(lang, "profile.change_photo"))],
-                                    className="profile-photo-link",
+                                html.Div(
+                                    avatar_node(name, profile.get("foto"), "profile-avatar large"),
+                                    id="profile-photo-preview",
                                 ),
+                                dcc.Upload(
+                                    id="profile-photo-upload",
+                                    children=html.Span(
+                                        [icon("camera", accent, 15), html.Span(tr(lang, "profile.change_photo"))],
+                                        className="profile-photo-link",
+                                    ),
+                                    accept="image/png,image/jpeg,image/webp",
+                                    multiple=False,
+                                    className="profile-photo-upload",
+                                ),
+                                html.Div(
+                                    [
+                                        html.Button(
+                                            tr(lang, "profile.remove_photo"),
+                                            id="profile-photo-remove",
+                                            className="profile-photo-remove",
+                                            type="button",
+                                            n_clicks=0,
+                                        )
+                                    ]
+                                    if profile.get("foto")
+                                    else [],
+                                    id="profile-photo-remove-wrap",
+                                ),
+                                html.Div(id="profile-photo-message", className="photo-message"),
+                                dcc.Store(id="profile-photo-delete", data=False),
                             ],
                             className="profile-edit-aside",
                         ),
@@ -2390,6 +2514,7 @@ def render(path, auth, values, prefs, profile, demo_dismissed, followups_version
                 "email": user["correo"],
                 "role": user["rol"],
                 "genero": user.get("genero") or "",
+                "foto": user.get("foto") or "",
             }
     if not auth:
         return login_page(lang)
@@ -2406,7 +2531,8 @@ def render(path, auth, values, prefs, profile, demo_dismissed, followups_version
     elif path == "/reportes":
         content = reports_page(values, lang, dark, dismissed_demo)
     elif path == "/perfil":
-        content = profile_page(lang, dark, profile)
+        flash = flask_session.pop("profile_flash", "") if has_request_context() else ""
+        content = profile_page(lang, dark, profile, flash)
     elif path == "/perfil/editar":
         content = profile_edit_page(lang, dark, profile)
     else:
@@ -2564,6 +2690,61 @@ def logout(_):
 
 
 @callback(
+    Output("profile-photo-preview", "children"),
+    Output("profile-photo-message", "children"),
+    Output("profile-photo-delete", "data"),
+    Input("profile-photo-upload", "contents"),
+    State("profile", "data"),
+    State("prefs", "data"),
+    prevent_initial_call=True,
+)
+def preview_profile_photo(contents, profile, prefs):
+    """Vista previa local; aún no guarda nada."""
+    if not contents:
+        raise PreventUpdate
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    profile = {**DEFAULT_PROFILE, **(profile or {})}
+    user = current_user() if has_request_context() else None
+    name = (user or profile).get("nombre") if user else profile.get("name")
+    current_photo = (user or {}).get("foto") or ""
+    try:
+        _decode_avatar(contents)
+    except ValueError:
+        return (
+            avatar_node(name, current_photo, "profile-avatar large"),
+            tr(lang, "profile.photo_error"),
+            no_update,
+        )
+    return (
+        html.Img(src=contents, alt=name or "", className="profile-avatar large avatar-photo"),
+        "",
+        False,
+    )
+
+
+@callback(
+    Output("profile-photo-preview", "children", allow_duplicate=True),
+    Output("profile-photo-remove-wrap", "children", allow_duplicate=True),
+    Output("profile-photo-message", "children", allow_duplicate=True),
+    Output("profile-photo-delete", "data", allow_duplicate=True),
+    Input("profile-photo-remove", "n_clicks"),
+    State("profile", "data"),
+    prevent_initial_call=True,
+)
+def clear_profile_photo(_, profile):
+    """Marca la foto para quitarla al guardar; vuelve a las iniciales."""
+    if not _:
+        raise PreventUpdate
+    profile = {**DEFAULT_PROFILE, **(profile or {})}
+    return (
+        html.Div(initials(profile.get("name")), className="profile-avatar large"),
+        [],
+        "",
+        True,
+    )
+
+
+@callback(
     Output("profile", "data", allow_duplicate=True),
     Output("url", "pathname", allow_duplicate=True),
     Output("profile-message", "children"),
@@ -2571,11 +2752,13 @@ def logout(_):
     State("profile-name", "value"),
     State("profile-email", "value"),
     State("profile-description", "value"),
+    State("profile-photo-upload", "contents"),
+    State("profile-photo-delete", "data"),
     State("profile", "data"),
     State("prefs", "data"),
     prevent_initial_call=True,
 )
-def save_profile(_, name, email, description, profile, prefs):
+def save_profile(_, name, email, description, photo_contents, photo_delete, profile, prefs):
     if not _:
         raise PreventUpdate
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
@@ -2592,16 +2775,39 @@ def save_profile(_, name, email, description, profile, prefs):
         user = current_user()
         if not user:
             return no_update, no_update, tr(lang, "password.session")
+        current_photo = user.get("foto") or ""
+        new_photo = current_photo
+        photo_changed = False
+        if photo_delete:
+            if current_photo:
+                remove_avatar(current_photo)
+                photo_changed = True
+            new_photo = ""
+        elif photo_contents:
+            try:
+                filename = save_avatar(user["id"], photo_contents)
+            except ValueError:
+                return no_update, no_update, tr(lang, "profile.photo_error")
+            if filename != current_photo:
+                remove_avatar(current_photo)
+                photo_changed = True
+            new_photo = filename
         try:
             changed = update_name(user["id"], name)
         except ValueError as exc:
             return no_update, no_update, str(exc)
+        if new_photo != current_photo:
+            changed = update_photo(user["id"], new_photo or None)
+            photo_changed = True
+        if photo_changed:
+            flask_session["profile_flash"] = tr(lang, "profile.photo_updated")
         updated = {
             **updated,
             "name": changed["nombre"],
             "email": changed["correo"],
             "role": changed["rol"],
             "genero": changed.get("genero") or "",
+            "foto": new_photo,
         }
     return updated, "/perfil", ""
 

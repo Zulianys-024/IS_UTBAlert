@@ -122,7 +122,14 @@ siendo clickeables cuando el menú está abierto. */
 .profile-edit-card{padding:0}
 .profile-edit-body{display:flex;gap:40px;padding:26px 26px 8px}
 .profile-edit-aside{width:230px;flex:none;display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px 0;border-right:1px solid var(--border)}
-.profile-photo-link{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--blue);cursor:default}
+.profile-photo-link{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--blue);cursor:pointer}
+.profile-photo-upload{display:inline-flex}
+.profile-photo-upload:hover .profile-photo-link{text-decoration:underline}
+.profile-photo-upload-active .profile-photo-link{opacity:.65}
+.profile-photo-remove{margin-top:2px;border:0;background:none;padding:0;font-family:inherit;font-size:10.5px;color:#8A94A2;cursor:pointer;text-decoration:underline}
+.profile-photo-remove:hover{color:var(--blue)}
+.photo-message{min-height:14px;max-width:210px;font-size:11px;line-height:1.35;color:#D64545;text-align:center}
+.avatar-photo{object-fit:cover;border-radius:50%;padding:0}
 .profile-edit-main{flex:1;padding-top:6px;max-width:640px}
 .profile-section-title{display:flex;align-items:center;gap:12px;margin-bottom:20px}
 .profile-section-title h2{font-size:20px;margin:0}
@@ -216,6 +223,8 @@ siendo clickeables cuando el menú está abierto. */
 .theme-dark .dash-dropdown-search-container{background:#0F1A2B;border-color:#243450}
 .theme-dark .dash-dropdown-clear{color:#8FA0B8}
 .theme-dark .profile-avatar{background:#17294A;color:#7FA6FF}
+.theme-dark .profile-photo-remove{color:#93A2B8}
+.theme-dark .profile-photo-remove:hover{color:#8FB3FF}
 .theme-dark .profile-role{color:#8FA0B8}
 .theme-dark .profile-email{color:#C6D3E4}
 .theme-dark .profile-details{border-top-color:#1E2A3F}

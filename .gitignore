@@ -17,3 +17,7 @@ users.db
 users.db-*
 *.sqlite
 *.sqlite3
+
+# Fotos de perfil subidas
+uploads/avatars/*
+!uploads/avatars/.gitkeep

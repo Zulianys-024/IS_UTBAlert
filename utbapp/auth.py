@@ -93,6 +93,7 @@ def init_db() -> None:
                 password_hash TEXT NOT NULL,
                 rol TEXT NOT NULL DEFAULT 'admin',
                 genero TEXT,
+                foto TEXT,
                 activo INTEGER NOT NULL DEFAULT 1,
                 debe_cambiar_password INTEGER NOT NULL DEFAULT 1,
                 creado_en TEXT NOT NULL,
@@ -104,6 +105,8 @@ def init_db() -> None:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(usuarios)")}
         if "genero" not in columns:
             conn.execute("ALTER TABLE usuarios ADD COLUMN genero TEXT")
+        if "foto" not in columns:
+            conn.execute("ALTER TABLE usuarios ADD COLUMN foto TEXT")
 
 
 def _row_to_dict(row: sqlite3.Row | None) -> dict | None:
@@ -215,6 +218,13 @@ def update_name(user_id: int, nombre: str) -> dict | None:
         raise ValueError("El nombre es obligatorio.")
     with _connect() as conn:
         conn.execute("UPDATE usuarios SET nombre = ? WHERE id = ?", (nombre, user_id))
+    return get_user_by_id(user_id)
+
+
+def update_photo(user_id: int, foto: str | None) -> dict | None:
+    """Guarda la ruta relativa de la foto de perfil (``None`` la quita)."""
+    with _connect() as conn:
+        conn.execute("UPDATE usuarios SET foto = ? WHERE id = ?", (foto, user_id))
     return get_user_by_id(user_id)
 
 
