@@ -281,3 +281,94 @@ def test_closed_followup_hides_update_and_close_actions():
     assert {"type": "followup-delete", "index": 0} in ids
     assert {"type": "followup-update", "index": 0} not in ids
     assert {"type": "followup-close", "index": 0} not in ids
+
+
+def _find_by_id(component, target_id):
+    """Devuelve el primer componente cuyo ``id`` coincide con ``target_id``."""
+    if isinstance(component, (list, tuple)):
+        for child in component:
+            match = _find_by_id(child, target_id)
+            if match is not None:
+                return match
+        return None
+    if getattr(component, "id", None) == target_id:
+        return component
+    if hasattr(component, "children"):
+        return _find_by_id(component.children, target_id)
+    return None
+
+
+def _student_link_style(table):
+    """Estilo condicional aplicado a la columna del ID del estudiante."""
+    return next(
+        style
+        for style in table.style_data_conditional
+        if style.get("if", {}).get("column_id") == "estudiante"
+    )
+
+
+def test_student_detail_modal_fields_start_empty():
+    dashboard.app._setup_server()
+
+    body = dashboard.student_detail_modal("es", dashboard.EMPTY_DETAIL)
+
+    for field_id in ("student-detail-note", "student-detail-action", "student-detail-date"):
+        field = _find_by_id(body, field_id)
+        assert field is not None
+        assert field.value == ""
+
+
+def test_students_table_link_color_follows_theme():
+    dashboard.app._setup_server()
+
+    light_table = _find_by_id(
+        dashboard.students_page({}, "es", False, False), "students-table"
+    )
+    dark_table = _find_by_id(
+        dashboard.students_page({}, "es", True, False), "students-table"
+    )
+
+    assert _student_link_style(light_table)["color"] == "#153DDA"
+    assert _student_link_style(dark_table)["color"] == "#7FA6FF"
+
+
+def test_alerts_table_link_color_follows_theme():
+    dashboard.app._setup_server()
+
+    light_table = _find_by_id(
+        dashboard.alerts_page({}, "es", False, False), "alerts-table"
+    )
+    dark_table = _find_by_id(
+        dashboard.alerts_page({}, "es", True, False), "alerts-table"
+    )
+
+    assert _student_link_style(light_table)["color"] == "#153DDA"
+    assert _student_link_style(dark_table)["color"] == "#7FA6FF"
+
+
+def test_page_root_prerenders_login_without_session():
+    dashboard.app._setup_server()
+
+    page = dashboard.page_root(
+        "/estudiantes", None, {}, dashboard.DEFAULT_PREFS, dashboard.DEFAULT_PROFILE
+    )
+    ids = _collect_ids(page)
+
+    assert "login-user" in ids
+    assert "students-table" not in ids
+
+
+def test_page_root_prerenders_authenticated_page_with_session():
+    dashboard.app._setup_server()
+
+    page = dashboard.page_root(
+        "/estudiantes",
+        {"user": "Camila"},
+        {},
+        dashboard.DEFAULT_PREFS,
+        dashboard.DEFAULT_PROFILE,
+    )
+    ids = _collect_ids(page)
+
+    assert "students-table" in ids
+    assert "login-user" not in ids

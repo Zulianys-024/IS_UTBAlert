@@ -9,7 +9,7 @@ import secrets
 import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import dash
 import pandas as pd
@@ -2501,8 +2501,90 @@ def modal(content, modal_id):
     return html.Div([html.Div(content, className="modal-card")], id=modal_id, className="modal hidden")
 
 
-app.layout = html.Div(
-    [
+def initial_request_path() -> str:
+    """Ruta de la página que originó la petición del layout.
+
+    ``/_dash-layout`` es una petición independiente de la URL del navegador,
+    así que se toma del ``Referer``; si no está disponible, se usa ``/``.
+    """
+    if not has_request_context():
+        return "/"
+    if request.path.startswith("/_dash-layout"):
+        referrer = request.referrer
+        if referrer:
+            path = urlparse(referrer).path
+            if path:
+                return path
+        return "/"
+    return request.path or "/"
+
+
+def page_root(
+    path,
+    auth,
+    values,
+    prefs,
+    profile,
+    demo_dismissed=False,
+    dir_values=None,
+    alerts_tab="all",
+    consume_flash=True,
+):
+    """Contenido de ``root`` según la sesión Flask y la ruta actual.
+
+    Lo usan tanto el prerenderizado del layout como el callback de navegación,
+    de modo que el primer pintado ya coincide con la sesión del usuario.
+    """
+    prefs = {**DEFAULT_PREFS, **(prefs or {})}
+    lang = prefs["lang"]
+    dark = prefs["theme"] == "dark"
+    profile = {**DEFAULT_PROFILE, **(profile or {})}
+    if has_request_context():
+        user = current_user()
+        if user is None:
+            auth = None
+        else:
+            auth = auth_payload(user)
+            profile = {
+                **profile,
+                "name": user["nombre"],
+                "email": user["correo"],
+                "role": user["rol"],
+                "genero": user.get("genero") or "",
+                "foto": user.get("foto") or "",
+            }
+    if not auth:
+        return login_page(lang)
+    if auth.get("must_change"):
+        return password_change_page(lang, auth)
+    path = path or "/"
+    dismissed_demo = bool(demo_dismissed)
+    if path == "/estudiantes":
+        content = students_page(dir_values, lang, dark, dismissed_demo)
+    elif path == "/alertas":
+        content = alerts_page(values, lang, dark, dismissed_demo, alerts_tab)
+    elif path == "/seguimientos":
+        content = followups_page(lang, dark, profile, dismissed_demo)
+    elif path == "/reportes":
+        content = reports_page(values, lang, dark, dismissed_demo)
+    elif path == "/perfil":
+        if has_request_context():
+            flash = (
+                flask_session.pop("profile_flash", "")
+                if consume_flash
+                else flask_session.get("profile_flash", "")
+            )
+        else:
+            flash = ""
+        content = profile_page(lang, dark, profile, flash)
+    elif path == "/perfil/editar":
+        content = profile_edit_page(lang, dark, profile)
+    else:
+        content = home_page(values, lang, dark, profile, dismissed_demo)
+    return shell(path, content, lang, dark, profile)
+
+
+LAYOUT_CHILDREN = [
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="auth", storage_type="session"),
         dcc.Store(id="prefs", storage_type="local", data=DEFAULT_PREFS),
@@ -2662,10 +2744,34 @@ app.layout = html.Div(
         ),
         dcc.Download(id="download"),
         dcc.Download(id="followup-history-download"),
-    ],
-    id="app",
-    className="app theme-light",
-)
+]
+
+
+def serve_layout():
+    """Layout inicial prerenderizado según la sesión Flask.
+
+    Evita el parpadeo del login al recargar: el primer HTML ya contiene la
+    página autenticada (o el login si no hay sesión), sin esperar al callback.
+    """
+    path = initial_request_path()
+    root = page_root(
+        path,
+        None,
+        {},
+        DEFAULT_PREFS,
+        DEFAULT_PROFILE,
+        consume_flash=False,
+    )
+    children = [
+        html.Div(id="root", children=root)
+        if getattr(child, "id", None) == "root"
+        else child
+        for child in LAYOUT_CHILDREN
+    ]
+    return html.Div(children, id="app", className="app theme-light")
+
+
+app.layout = serve_layout
 
 
 @callback(
@@ -2693,46 +2799,16 @@ def apply_theme(prefs, auth):
     Input("alerts-tab", "data"),
 )
 def render(path, auth, values, prefs, profile, demo_dismissed, followups_version, dir_values=None, alerts_tab="all"):
-    prefs = {**DEFAULT_PREFS, **(prefs or {})}
-    lang = prefs["lang"]
-    dark = prefs["theme"] == "dark"
-    profile = {**DEFAULT_PROFILE, **(profile or {})}
-    if has_request_context():
-        user = current_user()
-        if user is None:
-            auth = None
-        else:
-            auth = auth_payload(user)
-            profile = {
-                **profile,
-                "name": user["nombre"],
-                "email": user["correo"],
-                "role": user["rol"],
-                "genero": user.get("genero") or "",
-                "foto": user.get("foto") or "",
-            }
-    if not auth:
-        return login_page(lang)
-    if auth.get("must_change"):
-        return password_change_page(lang, auth)
-    path = path or "/"
-    dismissed_demo = bool(demo_dismissed)
-    if path == "/estudiantes":
-        content = students_page(dir_values, lang, dark, dismissed_demo)
-    elif path == "/alertas":
-        content = alerts_page(values, lang, dark, dismissed_demo, alerts_tab)
-    elif path == "/seguimientos":
-        content = followups_page(lang, dark, profile, dismissed_demo)
-    elif path == "/reportes":
-        content = reports_page(values, lang, dark, dismissed_demo)
-    elif path == "/perfil":
-        flash = flask_session.pop("profile_flash", "") if has_request_context() else ""
-        content = profile_page(lang, dark, profile, flash)
-    elif path == "/perfil/editar":
-        content = profile_edit_page(lang, dark, profile)
-    else:
-        content = home_page(values, lang, dark, profile, dismissed_demo)
-    return shell(path, content, lang, dark, profile)
+    return page_root(
+        path,
+        auth,
+        values,
+        prefs,
+        profile,
+        demo_dismissed,
+        dir_values,
+        alerts_tab,
+    )
 
 
 LOGIN_INPUTS = [
