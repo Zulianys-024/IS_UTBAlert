@@ -866,7 +866,10 @@ def home_page(values, lang, dark, profile, dismissed_demo=False):
         .copy()
     )
     recent["periodo"] = recent.periodo_academico.map(period_label)
-    recent["seguimiento"] = recent.estudiante_id.map(lambda x: followup_status(x, follows))
+    recent["seguimiento"] = [
+        alert_status(r.estudiante_id, r.estado_final, follows)
+        for r in recent.itertuples()
+    ]
     rows = [
         {
             "prioridad": risk_label(lang, r.riesgo),
@@ -1038,6 +1041,44 @@ def clean_text(value):
         return None
     text = str(value).strip()
     return text if text and text.lower() not in ("nan", "none") else None
+
+
+def student_final_state(student_id):
+    """Estado final del estudiante (ACTIVO, GRADUADO o DESERTOR)."""
+    if student_id in STUDENT_PROFILE.index:
+        return clean_text(STUDENT_PROFILE.at[student_id, "estado_final"])
+    return None
+
+
+def default_close_reason(lang, estado_final):
+    """Motivo por defecto al cerrar el caso de un graduado o desertor."""
+    if estado_final == "GRADUADO":
+        return tr(lang, "followups.default_reason_graduated")
+    if estado_final == "DESERTOR":
+        return tr(lang, "followups.default_reason_dropped")
+    return ""
+
+
+def alert_status(student_id, estado_final, records):
+    """Estado que se muestra en la bandeja de alertas.
+
+    - Con seguimiento abierto: ``En seguimiento`` (incluye los registros "Nueva"),
+      aunque el estudiante sea graduado o desertor: el caso sigue en Seguimientos.
+    - Graduados y desertores sin seguimiento abierto: ``Cerrada``.
+    - Sin seguimiento: ``Nueva`` (alerta aún sin atender).
+    - Con seguimiento cerrado: ``Cerrada``.
+    """
+    status = followup_status(student_id, records)
+    if status == "En seguimiento":
+        return "En seguimiento"
+    if estado_final in ("GRADUADO", "DESERTOR"):
+        return "Cerrada"
+    return "Nueva" if status == "Sin acompañamiento" else status
+
+
+def followup_display_status(record):
+    """Estado visible de un registro: "Nueva" se muestra como "En seguimiento"."""
+    return "Cerrada" if (record or {}).get("estado") == "Cerrada" else "En seguimiento"
 
 
 def fmt_detail(value, decimals=2, suffix=""):
@@ -1469,13 +1510,40 @@ ALERTS_TAB_STATUS = {
 def alerts_page(values, lang, dark, dismissed_demo=False, active_tab="all"):
     df = latest_view(values).copy()
     follows = read_followups()
+    if active_tab in ("closed", "followup"):
+        # Graduados, desertores y estudiantes con seguimiento abierto deben
+        # aparecer siempre en su bandeja, aunque los filtros globales excluyan
+        # su riesgo o su estado final.
+        relaxed_values = {**filters_from(values or {}), "riesgo": "Todos", "final": "Todos"}
+        extra = apply_filters(relaxed_values)
+        if active_tab == "closed":
+            extra = extra[extra.estado_final.isin(["GRADUADO", "DESERTOR"])]
+        else:
+            extra = extra[
+                [
+                    alert_status(r.estudiante_id, r.estado_final, follows) == "En seguimiento"
+                    for r in extra.itertuples()
+                ]
+            ]
+        df = pd.concat([df, extra]).drop_duplicates(subset=["estudiante_id"])
     df["periodo"] = df.periodo_academico.map(period_label)
-    df["estado"] = df.estudiante_id.map(lambda x: followup_status(x, follows))
-    df = df[df.riesgo.isin(["Alto", "Medio"])].sort_values(
+    df["estado"] = [
+        alert_status(r.estudiante_id, r.estado_final, follows)
+        for r in df.itertuples()
+    ]
+    df = df[
+        df.riesgo.isin(["Alto", "Medio"])
+        | df.estado_final.isin(["GRADUADO", "DESERTOR"])
+    ].sort_values(
         ["puntaje_riesgo", "promedio_ponderado_acumulado"], ascending=[False, True]
     )
     new_count = int((df.estado == "Nueva").sum())
-    if active_tab in ALERTS_TAB_STATUS:
+    if active_tab == "closed":
+        # Todos los graduados y desertores se muestran como casos cerrados,
+        # incluso si conservan un seguimiento abierto.
+        df = df[(df.estado == "Cerrada") | df.estado_final.isin(["GRADUADO", "DESERTOR"])]
+        df.loc[df.estado_final.isin(["GRADUADO", "DESERTOR"]), "estado"] = "Cerrada"
+    elif active_tab in ALERTS_TAB_STATUS:
         df = df[df.estado.isin(ALERTS_TAB_STATUS[active_tab])]
     link_color = "#7FA6FF" if dark else "#153DDA"
     rows = [
@@ -1708,7 +1776,7 @@ def followups_table(records, lang, dark):
                         style={**cell_style, "whiteSpace": "nowrap"},
                     ),
                     html.Td(html.Div(timestamp_children, className="followup-date-cell"), style=cell_style),
-                    html.Td(status_badge(lang, record.get("estado")), style=cell_style),
+                    html.Td(status_badge(lang, followup_display_status(record)), style=cell_style),
                     html.Td(
                         html.Div(action_buttons, className="followup-actions"),
                         style=actions_style,
@@ -1803,7 +1871,20 @@ def closed_followup_detail_modal(lang, record):
         items.append(
             detail_item(tr(lang, "followups.updated_at"), format_followup_datetime(record.get("updated_at")))
         )
+    estado_final = record.get("estado_final") or student_final_state(record.get("estudiante_id"))
+    close_reason = record.get("close_reason") or default_close_reason(lang, estado_final) or "—"
+    items.append(detail_item(tr(lang, "followups.close_reason"), close_reason))
     return [
+        html.Div(
+            html.Button(
+                tr(lang, "followups.export_history"),
+                id="export-closed-followup-history",
+                className="button",
+                n_clicks=0,
+                type="button",
+            ),
+            className="followup-export-bar",
+        ),
         html.Div(
             [
                 html.Div(
@@ -1857,7 +1938,10 @@ def closed_followup_detail_modal(lang, record):
 
 def followup_close_modal(lang, record):
     """Confirmación explícita antes de cerrar un seguimiento."""
-    student_id = (record or {}).get("estudiante_id") or "—"
+    record = record or {}
+    student_id = record.get("estudiante_id") or "—"
+    estado_final = record.get("estado_final") or student_final_state(record.get("estudiante_id"))
+    default_reason = default_close_reason(lang, estado_final)
     return [
         html.H2(tr(lang, "followups.close_title")),
         html.P(tr(lang, "followups.close_text")),
@@ -1867,6 +1951,13 @@ def followup_close_modal(lang, record):
                 html.B(student_id),
             ],
             className="followup-delete-target",
+        ),
+        html.P(tr(lang, "followups.close_reason"), className="followup-delete-target"),
+        dcc.Textarea(
+            id="followup-close-reason",
+            value=record.get("close_reason") or default_reason,
+            placeholder=tr(lang, "followups.close_reason_ph"),
+            className="textarea",
         ),
         html.P(tr(lang, "followups.close_warning"), className="followup-delete-warning"),
     ]
@@ -2596,6 +2687,7 @@ LAYOUT_CHILDREN = [
         dcc.Store(id="report-format-store", data="csv"),
         dcc.Store(id="selected-student"),
         dcc.Store(id="selected-followup"),
+        dcc.Store(id="selected-closed-followup"),
         dcc.Store(id="edit-followup"),
         dcc.Store(id="delete-followup"),
         dcc.Store(id="close-followup"),
@@ -2708,7 +2800,7 @@ LAYOUT_CHILDREN = [
         html.Div(
             html.Div(
                 [
-                    html.Div(id="followup-close-body"),
+                    html.Div(followup_close_modal("es", {}), id="followup-close-body"),
                     html.Div(
                         [
                             html.Button(
@@ -3225,7 +3317,7 @@ def toggle_student_detail(
             return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "detail.msg_date_range")))
         responsible = (profile or DEFAULT_PROFILE).get("name") or "Camila"
         try:
-            save_followup(student_id, period, responsible, note, action, next_date, "Nueva")
+            save_followup(student_id, period, responsible, note, action, next_date, "En seguimiento")
         except Exception:
             return (no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_error")))
         # Éxito: cierra, limpia el formulario y avisa con un toast temporal.
@@ -3279,6 +3371,41 @@ def export_any(clicks, path, values, dir_values, fmt):
     return export_frame(df, fmt or "csv")
 
 
+def followup_history_download(student_id, history_records, lang):
+    """Construye el XLSX con todo el historial de seguimiento del estudiante."""
+    labels = [
+        tr(lang, "col.period"),
+        tr(lang, "col.responsible"),
+        tr(lang, "col.status"),
+        tr(lang, "followups.note"),
+        tr(lang, "col.next_action"),
+        tr(lang, "followups.next_date"),
+        tr(lang, "followups.created_at"),
+        tr(lang, "followups.updated_at"),
+        tr(lang, "followups.close_reason"),
+        tr(lang, "followups.closed_at"),
+    ]
+    frame = pd.DataFrame([
+        [
+            r.get("periodo"),
+            r.get("responsable"),
+            status_label(lang, followup_display_status(r)),
+            r.get("nota"),
+            r.get("proxima_accion"),
+            r.get("fecha_proxima_accion"),
+            r.get("created_at"),
+            r.get("updated_at"),
+            r.get("close_reason") or "",
+            r.get("closed_at"),
+        ]
+        for r in history_records
+    ], columns=labels)
+    buffer = io.BytesIO()
+    frame.to_excel(buffer, index=False, engine="openpyxl")
+    filename_date = date.today().isoformat()
+    return dcc.send_bytes(buffer.getvalue(), f"seguimiento_{student_id}_{filename_date}.xlsx")
+
+
 @callback(
     Output("followup-history-download", "data"),
     Input("export-followup-history", "n_clicks"),
@@ -3293,27 +3420,28 @@ def export_followup_history(clicks, selected_index, prefs):
     if selected_index < 0 or selected_index >= len(records):
         raise PreventUpdate
     student_id = records[selected_index].get("estudiante_id")
-    history_records = followup_history(student_id, records)
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
-    labels = [
-        tr(lang, "col.period"),
-        tr(lang, "followups.note"),
-        tr(lang, "col.next_action"),
-        tr(lang, "followups.next_date"),
-        tr(lang, "followups.created_at"),
-        tr(lang, "followups.updated_at"),
-    ]
-    frame = pd.DataFrame([
-        [
-            r.get("periodo"), r.get("nota"), r.get("proxima_accion"),
-            r.get("fecha_proxima_accion"), r.get("created_at"), r.get("updated_at"),
-        ]
-        for r in history_records
-    ], columns=labels)
-    buffer = io.BytesIO()
-    frame.to_excel(buffer, index=False, engine="openpyxl")
-    filename_date = date.today().isoformat()
-    return dcc.send_bytes(buffer.getvalue(), f"seguimiento_{student_id}_{filename_date}.xlsx")
+    return followup_history_download(student_id, followup_history(student_id, records), lang)
+
+
+@callback(
+    Output("followup-history-download", "data", allow_duplicate=True),
+    Output("toast", "className", allow_duplicate=True),
+    Output("toast", "children", allow_duplicate=True),
+    Input("export-closed-followup-history", "n_clicks"),
+    State("selected-closed-followup", "data"),
+    State("prefs", "data"),
+    prevent_initial_call=True,
+)
+def export_closed_followup_history(clicks, selected, prefs):
+    if not clicks or not selected:
+        raise PreventUpdate
+    lang = (prefs or DEFAULT_PREFS).get("lang", "es")
+    student_id = selected.get("student_id")
+    history_records = followup_history(student_id)
+    if not history_records:
+        return no_update, *toast("error", tr(lang, "followups.msg_no_history"))
+    return followup_history_download(student_id, history_records, lang), no_update, no_update
 
 
 @callback(
@@ -3581,6 +3709,7 @@ def _followup_index(records, record):
     Output("selected-followup", "data", allow_duplicate=True),
     Output("closed-followup-detail-modal", "className", allow_duplicate=True),
     Output("closed-followup-detail-body", "children", allow_duplicate=True),
+    Output("selected-closed-followup", "data", allow_duplicate=True),
     Input("alerts-table", "active_cell"),
     State("alerts-table", "data"),
     State("alerts-tab", "data"),
@@ -3599,14 +3728,26 @@ def open_alert_detail(active_cell, table_data, active_tab, prefs):
         raise PreventUpdate
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
     records = read_followups()
-    status = followup_status(student_id, records)
+    estado_final = student_final_state(student_id)
+    status = alert_status(student_id, estado_final, records)
     latest = vigente_followup(student_id, records)
     tab = active_tab or "all"
 
     # Cerradas: se queda en Alertas y abre el detalle del seguimiento cerrado.
+    # Graduados y desertores también entran aquí aunque no tengan seguimiento.
     if tab == "closed" or status == "Cerrada":
         if latest is None:
-            raise PreventUpdate
+            record = {
+                "estudiante_id": student_id,
+                "estado": "Cerrada",
+                "estado_final": estado_final,
+                "close_reason": default_close_reason(lang, estado_final),
+            }
+        else:
+            record = dict(latest)
+            record["estado_final"] = estado_final
+            if not record.get("close_reason"):
+                record["close_reason"] = default_close_reason(lang, estado_final)
         return (
             no_update,
             no_update,
@@ -3616,7 +3757,8 @@ def open_alert_detail(active_cell, table_data, active_tab, prefs):
             no_update,
             no_update,
             "modal",
-            closed_followup_detail_modal(lang, latest),
+            closed_followup_detail_modal(lang, record),
+            {"student_id": student_id, "estado_final": estado_final},
         )
 
     # En seguimiento: navega a Seguimientos y abre el detalle del seguimiento.
@@ -3636,6 +3778,7 @@ def open_alert_detail(active_cell, table_data, active_tab, prefs):
             index,
             no_update,
             no_update,
+            no_update,
         )
 
     # Nuevas (o Todas sin seguimiento activo): navega a Estudiantes y abre su detalle.
@@ -3647,6 +3790,7 @@ def open_alert_detail(active_cell, table_data, active_tab, prefs):
         "modal",
         student_detail_modal(lang, data),
         student_id,
+        no_update,
         no_update,
         no_update,
         no_update,
@@ -3676,12 +3820,13 @@ def close_closed_followup_detail(clicks):
     Input({"type": "followup-close", "index": dash.ALL}, "n_clicks"),
     Input("cancel-followup-close", "n_clicks"),
     Input("confirm-followup-close", "n_clicks"),
+    State("followup-close-reason", "value"),
     State("close-followup", "data"),
     State("prefs", "data"),
     State("followups-version", "data"),
     prevent_initial_call=True,
 )
-def manage_followup_close(table_clicks, cancel_clicks, confirm_clicks, close_index, prefs, version):
+def manage_followup_close(table_clicks, cancel_clicks, confirm_clicks, reason, close_index, prefs, version):
     lang = (prefs or DEFAULT_PREFS).get("lang", "es")
     trigger = dash.ctx.triggered_id
     if trigger == "cancel-followup-close":
@@ -3699,8 +3844,11 @@ def manage_followup_close(table_clicks, cancel_clicks, confirm_clicks, close_ind
     if trigger == "confirm-followup-close":
         if not confirm_clicks or close_index is None:
             raise PreventUpdate
+        reason = (reason or "").strip()
+        if not reason:
+            return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_close_reason_missing"))
         try:
-            close_followup(close_index)
+            close_followup(close_index, reason)
         except Exception:
             return no_update, no_update, no_update, no_update, *toast("error", tr(lang, "followups.msg_close_error"))
         return (

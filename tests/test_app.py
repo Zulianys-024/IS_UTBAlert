@@ -164,7 +164,18 @@ def test_followup_history_export_xlsx():
 
     expected_columns = [
         dashboard.tr("es", key)
-        for key in ("col.period", "followups.note", "col.next_action", "followups.next_date", "followups.created_at", "followups.updated_at")
+        for key in (
+            "col.period",
+            "col.responsible",
+            "col.status",
+            "followups.note",
+            "col.next_action",
+            "followups.next_date",
+            "followups.created_at",
+            "followups.updated_at",
+            "followups.close_reason",
+            "followups.closed_at",
+        )
     ]
     assert list(exported.columns) == expected_columns
 
@@ -215,7 +226,8 @@ def test_followup_lifecycle_close_and_report_updates(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(data_access, "FOLLOWUPS_PATH", path)
 
-    assert followup_status("T00011387") == "Nueva"
+    # Los registros históricos "Nueva" se muestran como "En seguimiento".
+    assert followup_status("T00011387") == "En seguimiento"
 
     updated = data_access.create_followup_update(
         0, "202601", "Camila", "Segunda nota", "Esperar", "2026-11-25", "En seguimiento"
@@ -223,9 +235,10 @@ def test_followup_lifecycle_close_and_report_updates(monkeypatch, tmp_path):
     assert updated["report_updates"] == 1
     assert followup_status("T00011387") == "En seguimiento"
 
-    closed = data_access.close_followup(1)
+    closed = data_access.close_followup(1, "Caso resuelto")
     assert closed["estado"] == "Cerrada"
     assert closed["closed_at"]
+    assert closed["close_reason"] == "Caso resuelto"
     assert followup_status("T00011387") == "Cerrada"
 
     with pytest.raises(ValueError):
@@ -246,18 +259,113 @@ def test_closed_followup_detail_modal_fields():
         "report_updates": 3,
         "created_at": "2026-11-01T10:00:00",
         "closed_at": "2026-11-07T15:30:00",
+        "close_reason": "El seguimiento dio resultados",
     }
     body = dashboard.closed_followup_detail_modal("es", record)
     ids = _collect_ids(body)
 
     assert "close-closed-followup-detail" in ids
+    assert "export-closed-followup-history" in ids
     assert "edit-followup-detail" not in ids
     assert "update-followup-detail" not in ids
     text = " ".join(_collect_text(body))
     assert dashboard.tr("es", "followups.report_updates") in text
     assert dashboard.tr("es", "followups.closed_at") in text
+    assert dashboard.tr("es", "followups.close_reason") in text
+    assert "El seguimiento dio resultados" in text
     assert "3" in text
     assert "07/11/2026 15:30" in text
+
+
+def test_closed_followup_detail_uses_default_reason_for_desertor():
+    dashboard.app._setup_server()
+
+    record = {
+        "estudiante_id": "T00011387",
+        "periodo": "202601",
+        "estado": "Cerrada",
+        "created_at": "2026-11-01T10:00:00",
+        "closed_at": "2026-11-07T15:30:00",
+    }
+    text = " ".join(_collect_text(dashboard.closed_followup_detail_modal("es", record)))
+    assert dashboard.tr("es", "followups.default_reason_dropped") in text
+
+
+def test_followup_close_modal_requires_and_defaults_reason():
+    dashboard.app._setup_server()
+
+    modal = dashboard.followup_close_modal("es", {"estudiante_id": "T00011387"})
+    reason = _find_by_id(modal, "followup-close-reason")
+    assert reason is not None
+    assert reason.value == dashboard.tr("es", "followups.default_reason_dropped")
+
+    active = dashboard.followup_close_modal("es", {"estudiante_id": "T00011226"})
+    active_reason = _find_by_id(active, "followup-close-reason")
+    assert active_reason is not None
+    assert active_reason.value == ""
+
+
+def test_close_reason_input_exists_in_initial_layout():
+    # Dash exige que los State existan desde el inicio; el textarea del motivo
+    # se prerenderiza dentro del modal oculto para evitar errores en el callback.
+    dashboard.app._setup_server()
+    assert _find_by_id(dashboard.LAYOUT_CHILDREN, "followup-close-reason") is not None
+
+
+def test_followup_alerts_include_every_open_followup():
+    dashboard.app._setup_server()
+    follows = read_followups()
+    open_ids = {
+        student_id
+        for student_id in {r.get("estudiante_id") for r in follows}
+        if followup_status(student_id, follows) == "En seguimiento"
+    }
+    assert open_ids
+
+    table = _alerts_table("followup")
+    ids = {row["estudiante"] for row in table.data}
+    assert open_ids <= ids
+    assert all(row["estado"] == "En seguimiento" for row in table.data)
+    # T00011387 es desertor pero conserva un seguimiento abierto.
+    assert "T00011387" in ids
+
+
+def test_alert_status_for_graduates_dropouts_and_followups():
+    dashboard.app._setup_server()
+    records = read_followups()
+
+    # Un seguimiento abierto manda: aparece en "En seguimiento" aunque el
+    # estudiante sea desertor (caso T00011387) o graduado.
+    assert dashboard.alert_status("T00011387", "DESERTOR", records) == "En seguimiento"
+    open_record = [{"estudiante_id": "X", "estado": "Nueva", "created_at": "2026-01-01T00:00:00"}]
+    assert dashboard.alert_status("X", "GRADUADO", open_record) == "En seguimiento"
+    # Sin seguimiento abierto, graduados y desertores quedan cerrados.
+    assert dashboard.alert_status("T00012037", "DESERTOR", records) == "Cerrada"
+    closed_record = [{"estudiante_id": "X", "estado": "Cerrada", "created_at": "2026-01-01T00:00:00"}]
+    assert dashboard.alert_status("X", "GRADUADO", closed_record) == "Cerrada"
+    # Un estudiante activo con seguimiento (aunque sea histórico "Nueva").
+    assert dashboard.alert_status("T00011226", "ACTIVO", records) == "En seguimiento"
+    # Un estudiante activo sin seguimiento conserva la alerta "Nueva".
+    assert dashboard.alert_status("T00011259", "ACTIVO", records) == "Nueva"
+
+
+def test_closed_alerts_include_graduates_and_dropouts():
+    dashboard.app._setup_server()
+
+    closed = _alerts_table("closed")
+    states = {row["estudiante"]: row["estado"] for row in closed.data}
+    assert all(state == "Cerrada" for state in states.values())
+    assert "T00011387" in states  # desertor con seguimiento
+
+    # Aun con filtros que excluyen su estado final, siguen apareciendo.
+    page = dashboard.alerts_page(
+        {"riesgo": "Bajo", "final": "ACTIVO"}, "es", False, False, "closed"
+    )
+    table = next(
+        child for child in page[3].children if child.__class__.__name__ == "DataTable"
+    )
+    ids = {row["estudiante"] for row in table.data}
+    assert "T00011387" in ids
 
 
 def test_closed_followup_hides_update_and_close_actions():

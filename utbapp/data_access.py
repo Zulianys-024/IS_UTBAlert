@@ -53,7 +53,7 @@ def _write_followups(records: list[dict]) -> None:
     FOLLOWUPS_PATH.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def save_followup(student_id: str, period: str, responsible: str, note: str, next_action: str, next_date: str, status: str = "Nueva"):
+def save_followup(student_id: str, period: str, responsible: str, note: str, next_action: str, next_date: str, status: str = "En seguimiento"):
     records = read_followups()
     if any(r.get("estudiante_id") == student_id for r in records):
         raise ValueError("El estudiante ya tiene un seguimiento; usa actualizar reporte")
@@ -72,7 +72,7 @@ def save_followup(student_id: str, period: str, responsible: str, note: str, nex
     return records[-1]
 
 
-def create_followup_update(index: int, period: str, responsible: str, note: str, next_action: str, next_date: str, status: str = "Nueva") -> dict:
+def create_followup_update(index: int, period: str, responsible: str, note: str, next_action: str, next_date: str, status: str = "En seguimiento") -> dict:
     """Agrega un nuevo registro para el estudiante, conservando el anterior."""
     records = read_followups()
     if index < 0 or index >= len(records):
@@ -119,8 +119,8 @@ def update_followup(
     return record
 
 
-def close_followup(index: int) -> dict:
-    """Cierra el seguimiento indicado y guarda la fecha y hora de cierre."""
+def close_followup(index: int, reason: str = "") -> dict:
+    """Cierra el seguimiento indicado y guarda la fecha, hora y motivo de cierre."""
     records = read_followups()
     if index < 0 or index >= len(records):
         raise IndexError("Seguimiento no encontrado")
@@ -129,6 +129,9 @@ def close_followup(index: int) -> dict:
         raise ValueError("El seguimiento ya está cerrado")
     record["estado"] = "Cerrada"
     record["closed_at"] = datetime.now().isoformat(timespec="seconds")
+    reason = (reason or "").strip()
+    if reason:
+        record["close_reason"] = reason
     _write_followups(records)
     return record
 
@@ -176,4 +179,7 @@ def followup_status(student_id: str, records: list[dict] | None = None) -> str:
     # El estado vigente es el del registro más reciente: así el cierre de un
     # seguimiento se refleja de inmediato en Alertas, Estudiantes y Seguimientos.
     latest = max(matching, key=lambda r: r.get("created_at") or "")
-    return latest.get("estado") or "Nueva"
+    status = latest.get("estado") or "En seguimiento"
+    # "Nueva" era el estado inicial de un caso que ya tiene acompañamiento;
+    # se normaliza a "En seguimiento" para que aparezca en esa bandeja.
+    return "En seguimiento" if status == "Nueva" else status
