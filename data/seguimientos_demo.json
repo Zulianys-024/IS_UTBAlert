@@ -82,8 +82,33 @@
     "nota": "Es  un perdedor.",
     "proxima_accion": "Transformarlo en un ganador.",
     "fecha_proxima_accion": "2026-11-09",
-    "estado": "Nueva",
+    "estado": "Cerrada",
     "report_updates": 0,
-    "created_at": "2026-11-08T13:02:59"
+    "created_at": "2026-11-08T13:02:59",
+    "closed_at": "2026-11-09T17:15:19",
+    "close_reason": "El estudiante se convirtio en un ganador."
+  },
+  {
+    "estudiante_id": "T00011813",
+    "periodo": "202601",
+    "responsable": "Juan Hernandez",
+    "nota": "El estudiante se encuentra en prueba academica debido a su PPA por debajo del limite estandar, presenta una asistencia del 61.7% en los 4 semestres cursados que lleva y su ultimo periodo vigente es el 2026-01",
+    "proxima_accion": "Hacer un acompañamiento junto con el director de programa para hablar con el estudiantes y buscar una solucion,el estudiante debe ser acompañado por su acudiente o en su defecto, por su codeudor.",
+    "fecha_proxima_accion": "2026-11-15",
+    "estado": "En seguimiento",
+    "report_updates": 0,
+    "created_at": "2026-11-09T16:56:47",
+    "updated_at": "2026-11-09T16:59:40"
+  },
+  {
+    "estudiante_id": "T00011813",
+    "periodo": "202601",
+    "responsable": "Juan Hernandez",
+    "nota": "A pesar del acompañamiento no se ha visto una mejora a corto plazo en su rendimiento semestral, su porcentaje de asistencias no ha aumentado y lleva mas de la mitad de materias de este semestre por debajo del minimo aceptable (3.0).",
+    "proxima_accion": "Asignar el caso a la entidad correspondiente en el area psico-social de la institucion",
+    "fecha_proxima_accion": "2026-11-30",
+    "estado": "En seguimiento",
+    "report_updates": 1,
+    "created_at": "2026-11-09T17:13:03"
   }
 ]
